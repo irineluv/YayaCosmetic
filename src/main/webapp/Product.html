@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yaya Cosmetic - Products</title>
+    <style>
+        /* Global Styles */
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #fcfcfc;
+        }
+
+        /* Header */
+        header {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-img { height: 40px; }
+        nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: bold; }
+
+        /* Product Header & Controls */
+        .product-section { padding: 40px 5%; }
+        
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 { margin: 0; font-size: 32px; text-transform: uppercase; }
+
+        .search-filter { display: flex; align-items: center; gap: 10px; }
+        .search-bar {
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            width: 250px;
+        }
+
+        /* Product Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+        }
+
+        .product-card {
+            background: #f9f6f2; /* Light cream background from image */
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover { transform: translateY(-5px); }
+
+        .product-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .product-card h3 { font-size: 18px; margin: 10px 0; color: #333; }
+        .product-card p { font-size: 14px; color: #666; margin: 5px 0; }
+        .product-card .price { font-weight: bold; color: #000; margin-top: 10px; }
+
+        /* Footer */
+        footer {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 40px 5%;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-col { flex: 1; min-width: 200px; }
+        .footer-col h4 { margin-bottom: 15px; text-transform: uppercase; }
+        .footer-col p, .footer-col a { color: #ddd; text-decoration: none; display: block; margin: 5px 0; font-size: 13px; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <img src="logo.png" alt="Logo" class="logo-img">
+            <span style="font-size: 24px; font-family: serif; letter-spacing: 2px;">YAYA COSMETIC</span>
+        </div>
+        <nav>
+            <a href="index.html">HOME</a>
+            <a href="products.html">PRODUCT</a>
+            <a href="#">CART</a>
+            <a href="#">HISTORY</a>
+            <a href="Login.html">PROFILE</a>
+        </nav>
+    </header>
+
+    <main class="product-section">
+        <div class="controls-row">
+            <h1>PRODUCTS</h1>
+            <div class="search-filter">
+                <input type="text" class="search-bar" placeholder="SEARCH">
+                <span style="font-size: 20px; cursor: pointer;">🔍</span>
+                <span style="font-size: 20px; cursor: pointer;">⏳</span> </div>
+        </div>
+
+        <div class="product-grid">
+            <div class="product-card">
+                <img src="gold-palette.png" alt="Yaya Gold Palette">
+                <h3>YAYA GOLD PALLATE</h3>
+                <p>Contain 12 shining color</p>
+                <div class="price">RM 100</div>
+            </div>
+            <div class="product-card">
+                <img src="blue-palette.png" alt="Yaya Blue Palette">
+                <h3>YAYA BLUE PALLATE</h3>
+                <p>Contain 12 blue shade color</p>
+                <div class="price">RM 100</div>
+            </div>
+            <div class="product-card">
+                <img src="green-palette.png" alt="Yaya Green Palette">
+                <h3>YAYA GREEN PALLATE</h3>
+                <p>Contain 12 earthy tone color</p>
+                <div class="price">RM 100</div>
+            </div>
+            <div class="product-card">
+                <img src="black-palette.png" alt="Yaya Black Palette">
+                <h3>YAYA BLACK PALLATE</h3>
+                <p>Contain 12 dark shade color</p>
+                <div class="price">RM 100</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-col">
+            <h4>ABOUT YAYA</h4>
+            <a href="#">HISTORY</a>
+            <a href="#">WORK IN YAYA</a>
+        </div>
+        <div class="footer-col">
+            <h4>ADDRESS</h4>
+            <p>BANGI AVENUE HEIGHT</p>
+            <p>DAMANSARA UTAMA</p>
+            <p>96029 DAMANSARA</p>
+            <p>SELANGOR</p>
+        </div>
+        <div class="footer-col">
+            <h4>CONTACT</h4>
+            <p>03-78279388 (OFFICE HOUR)</p>
+            <p>yayacosmetic@hotline.com (official email)</p>
+            <p>@yayacosmeticofficial (Instagram)</p>
+        </div>
+    </footer>
+
+</body>
+</html>
