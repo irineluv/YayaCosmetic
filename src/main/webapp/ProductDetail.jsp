@@ -1,0 +1,288 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+    // 1. Get the "id" from the URL (e.g., ProductDetail.jsp?id=3)
+    String productId = request.getParameter("id");
+
+    String title = "YAYA GOLD PALLATE";
+    String price = "RM 100";
+    String imgClosed = "pic product/3.png";
+    String imgOpen = "pic product/DETAIL 3.png";
+    String colors = "Coffee Brown, Shiny Gold, Yellow Shine, Rose Shine, Gold Pink Shine, Pink Sparkle, Burgundy, Orange Shine, Brown Sparkle, Black, Maroon Shine, Burgundy Shine";
+
+    // 3. Logic to switch data based on the ID
+    if ("2".equals(productId)) {
+        title = "YAYA BLUE PALLATE";
+        imgClosed = "pic product/4.png";
+        imgOpen = "pic product/DETAIL 4.png";
+        colors = "Sky, Navy, Cobalt, Sapphire, Azure, Turquoise, Indigo, Teal, Cerulean, Midnight, Ice Blue, Denim";
+    } else if ("3".equals(productId)) {
+        title = "YAYA GREEN PALLATE";
+        imgClosed = "pic product/5.png";
+        imgOpen = "pic product/DETAIL 5.png";
+        colors = "Emerald, Mint, Olive, Forest, Lime, Sage, Jade, Moss, Seafoam, Pistachio, Kelly Green, Pine";
+    } else if ("4".equals(productId)) {
+        title = "YAYA BLACK PALLATE";
+        imgClosed = "pic product/6.png";
+        imgOpen = "pic product/DETAIL 6.png";
+        colors = "Onyx, Charcoal, Slate, Obsidian, Smoke, Jet Black, Ash, Graphite, Raven, Ebony, Gunmetal, Coal";
+    }  else if ("5".equals(productId)){
+        title = "YAYA PINK PALLATE";
+        imgClosed = "pic product/7.png";
+        imgOpen = "pic product/DETAIL 7.png";
+        colors = "Rose, Blush, Fuchsia, Magenta, Flamingo, Salmon, Coral Pink, Bubblegum, Sakura, Peony, Hot Pink, Taffy";
+    }  else if ("6".equals(productId)){
+        title = "YAYA ORANGE PALLATE";
+        imgClosed = "pic product/8.png";
+        imgOpen = "pic product/DETAIL 8.png";
+        colors = "Amber, Apricot, Peach, Tangerine, Carrot, Pumpkin, Coral, Bronze, Marmalade, Saffron, Papaya, Sunset";
+    }  else if ("7".equals(productId)){
+        title = "YAYA PURPLE PALLATE";
+        imgClosed = "pic product/9.png";
+        imgOpen = "pic product/DETAIL 9.png";
+        colors = "Lavender, Amethyst, Plum, Orchid, Violet, Mauve, Grape, Lilac, Sangria, Mulberry, Periwinkle, Eggplant";
+    }  else if ("8".equals(productId)){
+        title = "YAYA RED PALLATE";
+        imgClosed = "pic product/10.png";
+        imgOpen = "pic product/DETAIL 10.png";
+        colors = "Crimson, Ruby, Scarlet, Burgundy, Cherry, Brick, Garnet, Maroon, Merlot, Poppy, Currant, Candy Apple";
+    }  
+    
+    
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yaya Cosmetic - Product Detail</title>
+    <style>
+        /* Global Styles */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            color: #333;
+        }
+
+        /* Consistent Header */
+        header {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-img { height: 45px; width: auto; }
+        .brand-name { font-family: 'Times New Roman', serif; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Search Bar Area */
+        .search-container {
+            padding: 20px 5%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-wrapper {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 8px 35px 8px 15px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        /* Product Detail Layout */
+        .main-content {
+            display: flex;
+            padding: 40px 10%;
+            gap: 60px;
+            min-height: 60vh;
+        }
+
+        /* Left side: Images */
+        .product-images {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .product-images img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        /* Right side: Information */
+        .product-info {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .product-info h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #000;
+        }
+
+        .price {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .description {
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 40px;
+            font-size: 1rem;
+        }
+
+        .add-to-cart-btn {
+            background-color: #001a72; /* Deep Blue from your design */
+            color: white;
+            border: none;
+            padding: 15px 0;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.3s;
+        }
+
+        .add-to-cart-btn:hover {
+            background-color: #000f45;
+        }
+
+        /* Footer Section */
+        footer {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 40px 60px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .footer-col {
+            flex: 1;
+        }
+
+        .footer-col h4 {
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .footer-col p, .footer-col a {
+            display: block;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 13px;
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+
+        /* Responsive - stack on small screens */
+        @media (max-width: 768px) {
+            .hero, footer {
+                flex-direction: column;
+            }
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <img src="LOGO.png" alt="Yaya Logo" class="logo-img">
+            <div class="brand-name">Yaya Cosmetic</div>
+        </div>
+        <nav>
+            <a href="HomePage.html">HOME</a>
+            <a href="Product.html">PRODUCT</a>
+            <a href="Cart.jsp">CART</a>
+            <a href="#">HISTORY</a>
+            <a href="#">PROFILE</a>
+        </nav>
+    </header>
+
+    <div class="search-container">
+        <div class="search-wrapper">
+            <input type="text" class="search-bar" placeholder="SEARCH">
+            <span class="search-icon">🔍</span>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="product-images">
+            <img src="<%= imgClosed %>" alt="<%= title %> Closed">
+            <img src="<%= imgOpen %>" alt="<%= title %> Open">
+        </div>
+
+        <div class="product-info">
+            <h1><%= title %></h1>
+            <div class="price"><%= price %></div>
+            <div class="description">
+                <strong>COLOR:</strong> <%= colors %>
+            </div>
+           <form action="Cart.jsp" method="POST">
+                <input type="hidden" name="action" value="add">
+                <input type="hidden" name="id" value="<%= productId %>">
+                <button type="submit" class="add-to-cart-btn">ADD TO CART</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-col">
+            <h4>ABOUT YAYA</h4>
+            <a href="#">HISTORY</a>
+            <a href="#">WORK IN YAYA</a>
+        </div>
+        <div class="footer-col">
+            <h4>ADDRESS</h4>
+            <p>BANGI AVENUE HEIGHT<br>DAMANSARA UTAMA<br>96029 DAMANSARA<br>SELANGOR</p>
+        </div>
+        <div class="footer-col">
+            <h4>CONTACT</h4>
+            <p>03-78279388 (OFFICE HOUR)</p>
+            <p>yayacosmetic@hotline.com</p>
+            <p>@yayacosmeticofficial</p>
+        </div>
+    </footer>
+
+</body>
+</html>
