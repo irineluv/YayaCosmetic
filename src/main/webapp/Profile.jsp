@@ -239,8 +239,8 @@
                 <span class="field-label">Name</span>
                 <div class="field-content">
                     <span class="field-value"><%= userName %></span>
-                    <!-- Edit button shows alert for now, will redirect to edit form later -->
-                    <button class="edit-btn" onclick="alert('Edit functionality will be implemented with backend')">EDIT</button>
+                    <!-- Edit button redirects to EditProfile.jsp with field parameter -->
+                    <button class="edit-btn" onclick="editField('name')">EDIT</button>
                 </div>
             </div>
 
@@ -249,7 +249,7 @@
                 <span class="field-label">Email</span>
                 <div class="field-content">
                     <span class="field-value"><%= userEmail %></span>
-                    <button class="edit-btn" onclick="alert('Edit functionality will be implemented with backend')">EDIT</button>
+                    <button class="edit-btn" onclick="editField('email')">EDIT</button>
                 </div>
             </div>
 
@@ -258,7 +258,7 @@
                 <span class="field-label">Address</span>
                 <div class="field-content">
                     <span class="field-value"><%= userAddress %></span>
-                    <button class="edit-btn" onclick="alert('Edit functionality will be implemented with backend')">EDIT</button>
+                    <button class="edit-btn" onclick="editField('address')">EDIT</button>
                 </div>
             </div>
 
@@ -289,6 +289,16 @@
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
+
+    <script>
+        // JavaScript function to handle profile field editing
+        function editField(field) {
+            // Redirect to edit page with field name as URL parameter
+            window.location.href = 'EditProfile.jsp?field=' + field;
+            
+            // Later with backend: EditProfile.jsp form will submit to UpdateProfileServlet
+        }
+    </script>
 
 </body>
 </html>
