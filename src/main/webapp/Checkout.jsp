@@ -221,7 +221,7 @@
             <div class="brand-name">Yaya Cosmetic</div>
         </div>
         <nav>
-            <a href="HomePage.html">HOME</a>
+            <a href="HomePage.jsp">HOME</a>
             <a href="Product.html">PRODUCT</a>
             <a href="Cart.jsp">CART</a>
             <a href="History.jsp">HISTORY</a>

@@ -154,8 +154,7 @@
             background: conic-gradient(
                 #87CEEB 0% <%= product1Percent %>%, 
                 #4682B4 <%= product1Percent %>% <%= product1Percent + product2Percent %>%, 
-                #1E90FF <%= product1Percent + product2Percent %>% 100%
-            );
+                #1E90FF <%= product1Percent + product2Percent %>% 100%);
             position: relative;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }

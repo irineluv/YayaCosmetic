@@ -6,6 +6,6 @@
         </session-timeout>
     </session-config>
     <welcome-file-list>
-        <welcome-file>HomePage.html</welcome-file>
+        <welcome-file>HomePage.jsp</welcome-file>
     </welcome-file-list>
 </web-app>

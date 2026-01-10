@@ -142,12 +142,19 @@
         .forgot-trigger {
             cursor: pointer;
         }
-
+        
+        .left-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* Space between the two links */
+        }
+        
         .footer-links {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start; /* Keeps them aligned at the top */
             margin-top: 20px;
-        }
+        }   
 
         .footer-links a {
             font-size: 11px;
@@ -185,15 +192,19 @@
 
                 <button type="submit" class="sign-in-btn">SIGN IN</button>
 
-                <div class="footer-links">
-                    <a href="SignUp.html">Don't have account?</a>
-                    <div class="forgot-dropdown">
-                    <a href="javascript:void(0)" class="forgot-trigger">Forgot password?</a>
-                    <div class="forgot-content">
-                        <p>Please contact our admin to reset your password:</p>
-                        <strong>yayacosmetic@hotline.com</strong>
+               <div class="footer-links">
+                    <div class="left-links">
+                        <a href="SignUp.html">Don't have account?</a>
+                        <a href="AdminLogin.jsp" style="color: #611515;">ADMIN? Click Here to Login</a>
                     </div>
-                </div>
+
+                    <div class="forgot-dropdown">
+                        <a href="javascript:void(0)" class="forgot-trigger">Forgot password?</a>
+                        <div class="forgot-content">
+                            <p>Please contact our admin to reset your password:</p>
+                            <strong>yayacosmetic@hotline.com</strong>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>

@@ -170,7 +170,6 @@
 
                 <!-- Links to registration and user login -->
                 <div class="footer-links">
-                    <a href="AdminSignUp.jsp">Register as Admin</a>
                     <a href="Login.html">User Login</a>
                 </div>
             </form>
