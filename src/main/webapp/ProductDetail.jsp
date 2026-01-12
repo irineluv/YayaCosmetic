@@ -74,10 +74,24 @@
             align-items: center;
         }
 
-        .logo-area { display: flex; align-items: center; gap: 15px; }
-        .logo-img { height: 45px; width: auto; }
-        .brand-name { font-family: 'Times New Roman', serif; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; }
-
+        .logo-area { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+        }
+        
+        .logo-img { 
+            height: 45px; 
+            width: auto; 
+        }
+        
+        .brand-name { 
+            font-family: 'Times New Roman', serif; 
+            font-size: 24px; 
+            letter-spacing: 2px; 
+            text-transform: uppercase; 
+        }
+        
         nav a {
             color: white;
             text-decoration: none;
@@ -235,7 +249,30 @@
             <a href="Product.jsp">PRODUCT</a>
             <a href="Cart.jsp">CART</a>
             <a href="">HISTORY</a>
-            <a href="profile.jsp">PROFILE</a>
+            <div class="dropdown">
+                 <% 
+                     // Check if a user is logged in
+                     String currentUser = (String) session.getAttribute("userEmail"); 
+
+                     if (currentUser == null) { 
+                 %>
+                     <a href="#" class="dropbtn">Profile</a>
+                     <div class="dropdown-content">
+                         <a href="Login.html">Login</a>
+                         <a href="SignUp.html">Sign up</a>
+                     </div>
+                 <% 
+                     } else { 
+                 %>
+                     <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
+                     <div class="dropdown-content">
+                         <a href="Profile.jsp">View Profile</a>
+                         <a href="Logout.jsp">Logout</a>
+                     </div>
+                 <% 
+                     } 
+                 %>
+            </div>
         </nav>
     </header>
     

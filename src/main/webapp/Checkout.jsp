@@ -225,7 +225,30 @@
             <a href="Product.html">PRODUCT</a>
             <a href="Cart.jsp">CART</a>
             <a href="History.jsp">HISTORY</a>
-            <a href="Profile.jsp">PROFILE</a>
+            <div class="dropdown">
+                 <% 
+                     // Check if a user is logged in
+                     String currentUser = (String) session.getAttribute("userEmail"); 
+
+                     if (currentUser == null) { 
+                 %>
+                     <a href="#" class="dropbtn">Profile</a>
+                     <div class="dropdown-content">
+                         <a href="Login.html">Login</a>
+                         <a href="SignUp.html">Sign up</a>
+                     </div>
+                 <% 
+                     } else { 
+                 %>
+                     <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
+                     <div class="dropdown-content">
+                         <a href="Profile.jsp">View Profile</a>
+                         <a href="Logout.jsp">Logout</a>
+                     </div>
+                 <% 
+                     } 
+                 %>
+            </div>
         </nav>
     </header>
 

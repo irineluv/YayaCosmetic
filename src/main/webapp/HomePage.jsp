@@ -249,7 +249,7 @@
                 SHADES. DESIGNED FOR<br>
                 EFFORTLESS ELEGANCE.
             </p>
-            <a href="#" class="shop-link">SHOP THE COLLECTION NOW!</a>
+            <a href="Product.jsp" class="shop-link">SHOP THE COLLECTION NOW!</a>
         </div>
     </section>
 

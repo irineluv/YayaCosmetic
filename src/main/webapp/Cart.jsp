@@ -31,40 +31,85 @@
             background-color: #ffffff; }
         
         header {
-            background-color: #7b0d1e;
+            background-color: #7b0d1e; /* Deep Red/Burgundy */
             color: white;
-            padding: 1rem 5%;
+            padding: 10px 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .logo-area { 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        
-        .logo-img { 
-            height: 45px; 
-            width: auto; 
+
+        .logo-img {
+            height: 50px; /* Adjust based on your logo size */
+            width: auto;
         }
-        
-        .brand-name { 
-            font-family: 'Times New Roman', serif; 
-            font-size: 24px; 
-            letter-spacing: 2px; 
-            text-transform: uppercase; 
+
+        .brand-name {
+            font-size: 28px;
+            font-family: 'Times New Roman', serif;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
-        
+
         nav a {
             color: white;
             text-decoration: none;
             margin-left: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        nav {
+            display:flex;
+            align-items:center;
         }
 
+                .dropdown{
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-content{
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px black;
+            z-index: 1;
+            right: 0;
+            margin-top: 5px;
+        }
+        
+        .dropdown-content a{
+            color: #7b0d1e !important;
+            padding: 12px 16px;
+            display: block;
+            text-align: left;
+            margin: 0;
+            font-size: 13px;
+            text-transform: none;
+            border-bottom: 1px solid;
+        }
+        
+        .dropdown-content a:hover{
+            background-color: #f1f1f1;
+        }
+        
+        .dropdown:hover .dropdown-content{
+            display:block;
+        }
+        
+        .dropdown:hover .dropbtn{
+            color:#ccc;
+        }
+        
         .cart-container { padding: 40px 10%; }
         .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         
@@ -121,19 +166,42 @@
 <body>
 
     <header>
-        <div class="logo-area">
+        <div class="logo-container">
             <img src="LOGO.png" alt="Yaya Logo" class="logo-img">
-            <div class="brand-name">Yaya Cosmetic</div>
+            <div class="brand-name">YAYA COSMETIC</div>
         </div>
         <nav>
-            <a href="HomePage.jsp">HOME</a>
-            <a href="Product.html">PRODUCT</a>
-            <a href="Cart.jsp">CART</a>
-            <a href="#">HISTORY</a>
-            <a href="#">PROFILE</a>
+            <a href="HomePage.jsp">Home</a>
+            <a href="Product.jsp">Product</a>
+            <a href="Cart.jsp">Cart</a>
+            <a href="#">History</a>
+            <div class="dropdown">
+                 <% 
+                     // Check if a user is logged in
+                     String currentUser = (String) session.getAttribute("userEmail"); 
+
+                     if (currentUser == null) { 
+                 %>
+                     <a href="#" class="dropbtn">Profile</a>
+                     <div class="dropdown-content">
+                         <a href="Login.html">Login</a>
+                         <a href="SignUp.html">Sign up</a>
+                     </div>
+                 <% 
+                     } else { 
+                 %>
+                     <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
+                     <div class="dropdown-content">
+                         <a href="Profile.jsp">View Profile</a>
+                         <a href="Logout.jsp">Logout</a>
+                     </div>
+                 <% 
+                     } 
+                 %>
+            </div>
         </nav>
     </header>
-
+            
     <div class="cart-container">
         <div class="cart-header">
             <h1 style="font-size: 36px; margin: 0;">CART</h1>
