@@ -114,6 +114,26 @@
             margin-top: 10px;
             font-family: Arial, sans-serif;
         }
+        
+        .footer-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 20px;
+        }   
+
+        .footer-links a {
+            font-size: 11px;
+            color: #0047ab;
+            text-decoration: none;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            text-transform: uppercase;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
 
     </style>
 </head>
@@ -144,8 +164,13 @@
                         <label>ADDRESS</label>
                         <input type="text" placeholder="ENTER ADDRESS">
                     </div>
-                    <button type="submit" class="sign-in-btn">SIGN IN</button>
+                    <button type="submit" class="sign-in-btn">SIGN UP</button>
                     
+                    <div class="footer-links">
+                        <div class="left-links">
+                            <a href="Login.html">Already have an account? Login here.</a>
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -153,6 +178,7 @@
                 <img src="Benefit.png" alt="Member Benefits">
             </div>
         </div>
+
     </div>
 
 </body>

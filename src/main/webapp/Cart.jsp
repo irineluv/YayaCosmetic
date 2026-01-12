@@ -174,7 +174,7 @@
             <a href="HomePage.jsp">Home</a>
             <a href="Product.jsp">Product</a>
             <a href="Cart.jsp">Cart</a>
-            <a href="#">History</a>
+            <a href="History.jsp">History</a>
             <div class="dropdown">
                  <% 
                      // Check if a user is logged in
@@ -247,7 +247,9 @@
             }
         %>
             <div style="width: 100%; display: flex; justify-content: flex-end; padding: 20px 0;">
-                <button class="checkout-btn">CHECKOUT</button>
+                <a href="Checkout.jsp" style="text-decoration: none;">
+                    <button class="checkout-btn">CHECKOUT</button>
+                </a>
             </div>
         <% } %>
     </div>

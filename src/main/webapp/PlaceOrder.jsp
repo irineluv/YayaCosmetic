@@ -89,40 +89,85 @@
         
         /* Header */
         header {
-            background-color: #7b0d1e;
+            background-color: #7b0d1e; /* Deep Red/Burgundy */
             color: white;
-            padding: 1rem 5%;
+            padding: 10px 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .logo-area { 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        
-        .logo-img { 
-            height: 45px; 
-            width: auto; 
+
+        .logo-img {
+            height: 50px; /* Adjust based on your logo size */
+            width: auto;
         }
-        
-        .brand-name { 
-            font-family: 'Times New Roman', serif; 
-            font-size: 24px; 
-            letter-spacing: 2px; 
-            text-transform: uppercase; 
+
+        .brand-name {
+            font-size: 28px;
+            font-family: 'Times New Roman', serif;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
-        
+
         nav a {
             color: white;
             text-decoration: none;
             margin-left: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
-
+        
+        nav {
+            display:flex;
+            align-items:center;
+        }
+        
+        .dropdown{
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-content{
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px black;
+            z-index: 1;
+            right: 0;
+            margin-top: 5px;
+        }
+        
+        .dropdown-content a{
+            color: #7b0d1e !important;
+            padding: 12px 16px;
+            display: block;
+            text-align: left;
+            margin: 0;
+            font-size: 13px;
+            text-transform: none;
+            border-bottom: 1px solid;
+        }
+        
+        .dropdown-content a:hover{
+            background-color: #f1f1f1;
+        }
+        
+        .dropdown:hover .dropdown-content{
+            display:block;
+        }
+        
+        .dropdown:hover .dropbtn{
+            color:#ccc;
+        }
+        
         /* Main Content */
         .order-confirmation {
             padding: 60px 10%;
@@ -282,8 +327,8 @@
             <div class="brand-name">YAYA COSMETIC</div>
         </div>
         <nav>
-            <a href="HomePage.html">HOME</a>
-            <a href="Product.html">PRODUCT</a>
+            <a href="HomePage.jsp">HOME</a>
+            <a href="Product.jsp">PRODUCT</a>
             <a href="Cart.jsp">CART</a>
             <a href="History.jsp">HISTORY</a>
            <div class="dropdown">
@@ -348,7 +393,7 @@
 
                 <div class="action-buttons">
                     <a href="History.jsp" class="btn btn-primary">VIEW ORDER HISTORY</a>
-                    <a href="Product.html" class="btn btn-secondary">CONTINUE SHOPPING</a>
+                    <a href="Product.jsp" class="btn btn-secondary">CONTINUE SHOPPING</a>
                 </div>
             </div>
         </div>
