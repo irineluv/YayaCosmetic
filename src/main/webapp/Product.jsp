@@ -160,88 +160,43 @@
     <main class="product-section">
         <div class="controls-row">
             <h1>PRODUCTS</h1>
-            <div class="search-filter">
-                <input type="text" class="search-bar" placeholder="SEARCH">
-                <span style="font-size: 20px; cursor: pointer;">🔍</span>
-               </div>
+            
+            <form action="Product.jsp" method="GET" class="search-filter">
+                <input type="text" name="searchQuery" class="search-bar" placeholder="SEARCH" value="<%= query %>">
+                <button type="submit" style="background:none; border:none; font-size: 20px; cursor: pointer;">🔍</button>
+            </form>
         </div>
 
         <div class="product-grid">
-            <a href='ProductDetail.jsp?id=1' class="product-card">
-                <img src="pic product/3.png" alt="Yaya Gold Palette">
-                <h3>YAYA GOLD PALETTE</h3>
-                <p>Contain 12 shining color</p>
-                <div class="price">RM 100</div>
-            </a>
-            <a href='ProductDetail.jsp?id=2'  class="product-card">
-                <img src="pic product/4.png" alt="Yaya Blue Palette">
-                <h3>YAYA BLUE PALETTE</h3>
-                <p>Contain 12 blue shade color</p>
-                <div class="price">RM 100</div>
-            </a>
-            <a href='ProductDetail.jsp?id=3'  class="product-card">
-                <img src="pic product/5.png" alt="Yaya Green Palette">
-                <h3>YAYA GREEN PALETTE</h3>
-                <p>Contain 12 earthy tone color</p>
-                <div class="price">RM 100</div>
-            </a>
-            <a href='ProductDetail.jsp?id=4'  class="product-card">
-                <img src="pic product/6.png" alt="Yaya Black Palette">
-                <h3>YAYA BLACK PALETTE</h3>
-                <p>Contain 12 dark shade color</p>
-                <div class="price">RM 100</div>
-            </a>
-            
-            <a href='ProductDetail.jsp?id=5'  class="product-card">
-                <img src="pic product/7.png" alt="Yaya Pink Palette">
-                <h3>YAYA PINK PALETTE</h3>
-                <p>Contain 12 pink shade color</p>
-                <div class="price">RM 100</div>
-            </a>
-            
-            <a href='ProductDetail.jsp?id=6' class="product-card">
-                <img src="pic product/8.png" alt="Yaya Orange Palette">
-                <h3>YAYA ORANGE PALETTE</h3>
-                <p>Contain 12 fruity shade color</p>
-                <div class="price">RM 100</div>
-            </a>
-            
-            <a href='ProductDetail.jsp?id=7' class="product-card">
-                <img src="pic product/9.png" alt="Yaya Purple Palette">
-                <h3>YAYA PURPLE PALETTE</h3>
-                <p>Contain 12 purple shade color</p>
-                <div class="price">RM 100</div>
-            </a>
-            
-            <a href='ProductDetail.jsp?id='  class="product-card">
-                <img src="pic product/10.png" alt="Yaya Red Palette">
-                <h3>YAYA RED PALETTE</h3>
-                <p>Contain 12 red color</p>
-                <div class="price">RM 100</div>
-            </a>
+            <%
+                boolean hasResults = false;
+                for (int i = 0; i < allProducts.length; i++) {
+                    String id = allProducts[i][0];
+                    String name = allProducts[i][1];
+                    String desc = allProducts[i][2];
+                    String price = allProducts[i][3];
+                    String img = allProducts[i][4];
+
+                    // FIX 2: Only display the card if it matches the search query
+                    if (query.isEmpty() || name.toLowerCase().contains(query.toLowerCase()) || desc.toLowerCase().contains(query.toLowerCase())) {
+                        hasResults = true;
+            %>
+                        <a href='ProductDetail.jsp?id=<%= id %>' class="product-card">
+                            <img src="<%= img %>" alt="<%= name %>">
+                            <h3><%= name %></h3>
+                            <p><%= desc %></p>
+                            <div class="price"><%= price %></div>
+                        </a>
+            <%
+                    }
+                }
+                
+                if (!hasResults) {
+                    out.println("<p style='grid-column: 1/-1; text-align: center; padding: 50px;'>No products found for \"" + query + "\"</p>");
+                }
+            %>
         </div>
     </main>
 
-    <footer>
-        <div class="footer-col">
-            <h4>ABOUT YAYA</h4>
-            <a href="#">HISTORY</a>
-            <a href="#">WORK IN YAYA</a>
-        </div>
-        <div class="footer-col">
-            <h4>ADDRESS</h4>
-            <p>BANGI AVENUE HEIGHT</p>
-            <p>DAMANSARA UTAMA</p>
-            <p>96029 DAMANSARA</p>
-            <p>SELANGOR</p>
-        </div>
-        <div class="footer-col">
-            <h4>CONTACT</h4>
-            <p>03-78279388 (OFFICE HOUR)</p>
-            <p>yayacosmetic@hotline.com (official email)</p>
-            <p>@yayacosmeticofficial (Instagram)</p>
-        </div>
-    </footer>
-
-</body>
+    </body>
 </html>
