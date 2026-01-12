@@ -21,5 +21,9 @@
     <property name="keepgenerated" value="true">
       <description>Keep a copy of the generated servlet class' java code.</description>
     </property>
+    <resource-ref>
+    <res-ref-name>jdbc/myDatasource</res-ref-name>
+    <jndi-name>jdbc/myDatasource</jndi-name>
+    </resource-ref>
   </jsp-config>
 </glassfish-web-app>
