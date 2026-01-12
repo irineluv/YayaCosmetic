@@ -214,7 +214,7 @@
         </div>
         <nav>
             <a href="HomePage.jsp">HOME</a>
-            <a href="Product.html">PRODUCT</a>
+            <a href="Product.jsp">PRODUCT</a>
             <a href="Cart.jsp">CART</a>
             <a href="History.jsp">HISTORY</a>
             <a href="Profile.jsp">PROFILE</a>

@@ -232,7 +232,6 @@
     <div class="checkout-container">
         <!-- LEFT SIDE: Checkout Form -->
         <div class="checkout-form">
-            <!-- Form submits to PlaceOrder.jsp when user clicks "PLACE ORDER" button -->
             <form action="PlaceOrder.jsp" method="POST">
                 <!-- Section 1: Shipping Address -->
                 <div class="form-group">

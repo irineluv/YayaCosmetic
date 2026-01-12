@@ -1,3 +1,23 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.*" %>
+
+<%
+    // 1. Define all your products in an array
+    String[][] allProducts = {
+        {"1", "YAYA GOLD PALETTE", "Contain 12 shining color", "RM 100", "pic product/3.png"},
+        {"2", "YAYA BLUE PALETTE", "Contain 12 blue shade color", "RM 100", "pic product/4.png"},
+        {"3", "YAYA GREEN PALETTE", "Contain 12 earthy tone color", "RM 100", "pic product/5.png"},
+        {"4", "YAYA BLACK PALETTE", "Contain 12 dark shade color", "RM 100", "pic product/6.png"},
+        {"5", "YAYA PINK PALETTE", "Contain 12 pink shade color", "RM 100", "pic product/7.png"},
+        {"6", "YAYA ORANGE PALETTE", "Contain 12 fruity shade color", "RM 100", "pic product/8.png"},
+        {"7", "YAYA PURPLE PALETTE", "Contain 12 purple shade color", "RM 100", "pic product/9.png"},
+        {"8", "YAYA RED PALETTE", "Contain 12 red color", "RM 100", "pic product/10.png"}
+    };
+
+    // 2. Capture the search query from the input
+    String query = request.getParameter("searchQuery");
+    if (query == null) query = "";
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,7 +150,7 @@
         </div>
         <nav>
             <a href="HomePage.jsp">HOME</a>
-            <a href="Products.html">PRODUCT</a>
+            <a href="Product.jsp">PRODUCT</a>
             <a href="Cart.jsp">CART</a>
             <a href="#">HISTORY</a>
             <a href="#">PROFILE</a>

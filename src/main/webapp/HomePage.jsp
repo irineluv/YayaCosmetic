@@ -205,6 +205,10 @@
             <div class="brand-name">YAYA COSMETIC</div>
         </div>
         <nav>
+            <a href="HomePage.jsp">Home</a>
+            <a href="Product.jsp">Product</a>
+            <a href="Cart.jsp">Cart</a>
+            <a href="#">History</a>
             <div class="dropdown">
                  <% 
                      // Check if a user is logged in

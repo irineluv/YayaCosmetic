@@ -232,20 +232,13 @@
         </div>
         <nav>
             <a href="HomePage.jsp">HOME</a>
-            <a href="Product.html">PRODUCT</a>
+            <a href="Product.jsp">PRODUCT</a>
             <a href="Cart.jsp">CART</a>
-            <a href="#">HISTORY</a>
-            <a href="#">PROFILE</a>
+            <a href="">HISTORY</a>
+            <a href="profile.jsp">PROFILE</a>
         </nav>
     </header>
-
-    <div class="search-container">
-        <div class="search-wrapper">
-            <input type="text" class="search-bar" placeholder="SEARCH">
-            <span class="search-icon">🔍</span>
-        </div>
-    </div>
-
+    
     <main class="main-content">
         <div class="product-images">
             <img src="<%= imgClosed %>" alt="<%= title %> Closed">
