@@ -198,12 +198,8 @@
                         <a href="AdminLogin.jsp" style="color: #611515;">ADMIN? Click Here to Login</a>
                     </div>
 
-                    <div class="forgot-dropdown">
-                        <a href="javascript:void(0)" class="forgot-trigger">Forgot password?</a>
-                        <div class="forgot-content">
-                            <p>Please contact our admin to reset your password:</p>
-                            <strong>yayacosmetic@hotline.com</strong>
-                        </div>
+                    <div class="forgot-link-area">
+                        <a href="ForgotPass.jsp" class="forgot-trigger">Forgot password?</a>
                     </div>
                 </div>
             </form>
