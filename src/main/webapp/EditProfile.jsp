@@ -1,5 +1,15 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.*" %>
 <%
+    // Get cart count for badge
+    Map<String, Integer> cartItems = (Map<String, Integer>) session.getAttribute("cartItems");
+    int cartCount = 0;
+    if (cartItems != null) {
+        for (Integer qty : cartItems.values()) {
+            cartCount += qty;
+        }
+    }
+
     // ===== EDIT USER PROFILE PAGE LOGIC =====
     // This page displays a form to edit a specific user profile field
     // Accessed from Profile.jsp when user clicks EDIT button
@@ -75,6 +85,29 @@
             margin-left: 20px;
             font-size: 0.9rem;
             font-weight: 600;
+        }
+        
+        /* Cart Badge */
+        .cart-link {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: -10px;
+            right: -12px;
+            background-color: #ffd700;
+            color: #7b0d1e;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         /* ===== MAIN CONTENT AREA ===== */
@@ -204,9 +237,9 @@
             <div class="brand-name">Yaya Cosmetic</div>
         </div>
         <nav>
-            <a href="HomePage.html">HOME</a>
-            <a href="Product.html">PRODUCT</a>
-            <a href="Cart.jsp">CART</a>
+            <a href="HomePage.jsp">HOME</a>
+            <a href="Product.jsp">PRODUCT</a>
+            <a href="Cart.jsp" class="cart-link">CART<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount > 99 ? "99+" : cartCount %></span><% } %></a>
             <a href="History.jsp">HISTORY</a>
             <a href="Profile.jsp">PROFILE</a>
         </nav>
