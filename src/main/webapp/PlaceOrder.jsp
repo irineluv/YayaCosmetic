@@ -1,77 +1,49 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    // ===== ORDER CONFIRMATION PAGE LOGIC =====
-    // This page displays order confirmation after user completes checkout
+    // Get order details from parameters
+    String status = request.getParameter("status");
+    String orderRef = request.getParameter("ref");
+    String payment = request.getParameter("payment");
+    String amountStr = request.getParameter("amount");
     
-    // Get order details submitted from Checkout.jsp form
-    String address = request.getParameter("address"); // Shipping address
-    String payment = request.getParameter("payment"); // Payment method (online/cod)
-    String subtotalStr = request.getParameter("subtotal");
-    String shippingStr = request.getParameter("shipping");
-    String taxStr = request.getParameter("tax");
-    String totalStr = request.getParameter("total");
+    // Generate order reference if not provided
+    if (orderRef == null || orderRef.isEmpty()) {
+        orderRef = "YC" + System.currentTimeMillis();
+    }
     
-    // Convert string values to integers, use defaults if null
-    int subtotal = (subtotalStr != null) ? Integer.parseInt(subtotalStr) : 100;
-    int shipping = (shippingStr != null) ? Integer.parseInt(shippingStr) : 0;
-    int tax = (taxStr != null) ? Integer.parseInt(taxStr) : 10;
-    int total = (totalStr != null) ? Integer.parseInt(totalStr) : 110;
+    // Get cart items from session
+    Map<String, Integer> cartItems = (Map<String, Integer>) session.getAttribute("cartItems");
     
-    // Get cart from session to display product information
-    List<String> cart = (List<String>) session.getAttribute("cart");
-    
-    // Default product (Gold Palette) - shown if cart is empty
-    String productId = "1";
-    String productName = "YAYA GOLD PALLATE";
-    String productDesc = "Contain 12 shining color";
-    String productImg = "pic product/3.png";
-    
-    // If cart has items, get the first product to display
-    if (cart != null && !cart.isEmpty()) {
-        productId = cart.get(0); // Get first product ID from cart
-        
-        // Determine product details based on ID (hardcoded for now)
-        // Later with database: fetch product details using ProductDAO
-        if ("2".equals(productId)) { 
-            productName = "YAYA BLUE PALLATE"; 
-            productImg = "pic product/4.png"; 
-            productDesc = "Contain 12 blue shade color"; 
-        } else if ("3".equals(productId)) { 
-            productName = "YAYA GREEN PALLATE"; 
-            productImg = "pic product/5.png"; 
-            productDesc = "Contain 12 earthy tone color"; 
-        } else if ("4".equals(productId)) { 
-            productName = "YAYA BLACK PALLATE"; 
-            productImg = "pic product/6.png"; 
-            productDesc = "Contain 12 dark shade color"; 
-        } else if ("5".equals(productId)) { 
-            productName = "YAYA PINK PALLATE"; 
-            productImg = "pic product/7.png"; 
-            productDesc = "Contain 12 pink shade color"; 
-        } else if ("6".equals(productId)) { 
-            productName = "YAYA ORANGE PALLATE"; 
-            productImg = "pic product/8.png"; 
-            productDesc = "Contain 12 fruity shade color"; 
-        } else if ("7".equals(productId)) { 
-            productName = "YAYA PURPLE PALLATE"; 
-            productImg = "pic product/9.png"; 
-            productDesc = "Contain 12 purple shade color"; 
-        } else if ("8".equals(productId)) { 
-            productName = "YAYA RED PALLATE"; 
-            productImg = "pic product/10.png"; 
-            productDesc = "Contain 12 red shade color"; 
+    // Calculate totals
+    int subtotal = 0;
+    int totalItems = 0;
+    if (cartItems != null) {
+        for (Integer qty : cartItems.values()) {
+            totalItems += qty;
+            subtotal += qty * 100;
         }
     }
+    int shipping = 0;
+    int tax = 10;
+    int total = subtotal + shipping + tax;
     
-    // Clear cart after successful order placement
-    // This prevents duplicate orders if user refreshes the page
-    if (cart != null) {
-        cart.clear(); // Remove all items from cart
-        session.setAttribute("cart", cart); // Update session
+    // Use amount from parameter if available
+    if (amountStr != null) {
+        try { total = Integer.parseInt(amountStr); } catch (NumberFormatException e) {}
     }
     
-    // Later with database: save order to database before clearing cart
+    // Determine payment method display
+    String paymentDisplay = "Online Banking";
+    if ("cod".equals(payment)) {
+        paymentDisplay = "Cash on Delivery";
+    }
+    
+    // Clear cart after order is placed
+    if (cartItems != null) {
+        cartItems.clear();
+        session.setAttribute("cartItems", cartItems);
+    }
 %>
 
 <!DOCTYPE html>
@@ -79,7 +51,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yaya Cosmetic - Order Placed</title>
+    <title>Yaya Cosmetic - Order Confirmed</title>
     <style>
         body { 
             margin: 0; 
@@ -87,9 +59,8 @@
             background-color: #ffffff; 
         }
         
-        /* Header */
         header {
-            background-color: #7b0d1e; /* Deep Red/Burgundy */
+            background-color: #7b0d1e;
             color: white;
             padding: 10px 50px;
             display: flex;
@@ -104,7 +75,7 @@
         }
 
         .logo-img {
-            height: 50px; /* Adjust based on your logo size */
+            height: 50px;
             width: auto;
         }
 
@@ -125,16 +96,16 @@
         }
         
         nav {
-            display:flex;
-            align-items:center;
+            display: flex;
+            align-items: center;
         }
-        
-        .dropdown{
+
+        .dropdown {
             position: relative;
             display: inline-block;
         }
         
-        .dropdown-content{
+        .dropdown-content {
             display: none;
             position: absolute;
             background-color: #ffffff;
@@ -145,7 +116,7 @@
             margin-top: 5px;
         }
         
-        .dropdown-content a{
+        .dropdown-content a {
             color: #7b0d1e !important;
             padding: 12px 16px;
             display: block;
@@ -156,101 +127,164 @@
             border-bottom: 1px solid;
         }
         
-        .dropdown-content a:hover{
+        .dropdown-content a:hover {
             background-color: #f1f1f1;
         }
         
-        .dropdown:hover .dropdown-content{
-            display:block;
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        /* Cart Badge */
+        .cart-link {
+            position: relative;
+            display: inline-block;
         }
         
-        .dropdown:hover .dropbtn{
-            color:#ccc;
+        .cart-badge {
+            position: absolute;
+            top: -10px;
+            right: -12px;
+            background-color: #ffd700;
+            color: #7b0d1e;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-        
+
         /* Main Content */
-        .order-confirmation {
+        .confirmation-container {
             padding: 60px 10%;
             min-height: 60vh;
+            text-align: center;
         }
 
-        .confirmation-content {
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border-radius: 50%;
             display: flex;
-            gap: 50px;
             align-items: center;
-            background-color: #f9f6f2;
-            padding: 40px;
-            border-radius: 15px;
-            max-width: 900px;
-            margin: 0 auto;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: scaleIn 0.5s ease-out;
         }
 
-        .product-image {
-            flex: 0 0 200px;
+        @keyframes scaleIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
-        .product-image img {
-            width: 100%;
-            border-radius: 10px;
+        .success-icon::after {
+            content: "✓";
+            font-size: 50px;
+            color: white;
         }
 
-        .order-details {
-            flex: 1;
+        .confirmation-title {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 10px;
         }
 
-        .order-details h2 {
-            font-size: 28px;
-            margin: 0 0 10px 0;
-            font-weight: bold;
-        }
-
-        .order-details p {
+        .confirmation-subtitle {
+            font-size: 16px;
             color: #666;
-            margin: 5px 0 20px 0;
-            font-size: 14px;
+            margin-bottom: 40px;
         }
 
-        .order-summary {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .order-details-card {
+            background-color: #f9f6f2;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: left;
         }
 
-        .summary-row {
+        .order-ref {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+
+        .order-ref-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .order-ref-number {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .detail-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #666;
             font-size: 14px;
         }
 
-        .summary-row.total {
+        .detail-value {
             font-weight: bold;
-            font-size: 16px;
-            padding-top: 10px;
-            border-top: 2px solid #ddd;
-            margin-top: 10px;
+            font-size: 14px;
         }
 
-        .success-message {
+        .detail-row.total {
+            padding-top: 20px;
+            margin-top: 10px;
+            border-top: 2px solid #ddd;
+            border-bottom: none;
+        }
+
+        .detail-row.total .detail-label,
+        .detail-row.total .detail-value {
+            font-size: 18px;
+            color: #7b0d1e;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
             background-color: #4CAF50;
             color: white;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: bold;
-            font-size: 16px;
-            margin-top: 20px;
+            text-transform: uppercase;
         }
 
         .action-buttons {
             display: flex;
-            gap: 15px;
-            margin-top: 30px;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
         }
 
         .btn {
-            padding: 12px 30px;
+            padding: 15px 35px;
             border: none;
             border-radius: 8px;
             font-size: 14px;
@@ -258,7 +292,8 @@
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-            text-align: center;
+            text-transform: uppercase;
+            transition: all 0.3s;
         }
 
         .btn-primary {
@@ -277,6 +312,19 @@
 
         .btn-secondary:hover {
             background-color: #5a0a15;
+        }
+
+        .email-notice {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e3f2fd;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1565c0;
+        }
+
+        .email-notice::before {
+            content: "📧 ";
         }
 
         /* Footer */
@@ -309,12 +357,12 @@
         }
 
         @media (max-width: 768px) {
-            .confirmation-content {
+            .action-buttons {
                 flex-direction: column;
             }
             
-            .action-buttons {
-                flex-direction: column;
+            .order-details-card {
+                padding: 25px;
             }
         }
     </style>
@@ -329,73 +377,90 @@
         <nav>
             <a href="HomePage.jsp">HOME</a>
             <a href="Product.jsp">PRODUCT</a>
-            <a href="Cart.jsp">CART</a>
+            <a href="Cart.jsp" class="cart-link">CART</a>
             <a href="History.jsp">HISTORY</a>
-           <div class="dropdown">
-                 <% 
-                     // Check if a user is logged in
-                     String currentUser = (String) session.getAttribute("userEmail"); 
-
-                     if (currentUser == null) { 
-                 %>
-                     <a href="#" class="dropbtn">Profile</a>
-                     <div class="dropdown-content">
-                         <a href="Login.html">Login</a>
-                         <a href="SignUp.html">Sign up</a>
-                     </div>
-                 <% 
-                     } else { 
-                 %>
-                     <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
-                     <div class="dropdown-content">
-                         <a href="Profile.jsp">View Profile</a>
-                         <a href="Logout.jsp">Logout</a>
-                     </div>
-                 <% 
-                     } 
-                 %>
+            <div class="dropdown">
+                <% 
+                    String currentUser = (String) session.getAttribute("userEmail"); 
+                    if (currentUser == null) { 
+                %>
+                    <a href="#" class="dropbtn">Profile</a>
+                    <div class="dropdown-content">
+                        <a href="Login.jsp">Login</a>
+                        <a href="Signup.jsp">Sign up</a>
+                    </div>
+                <% 
+                    } else { 
+                %>
+                    <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
+                    <div class="dropdown-content">
+                        <a href="Profile.jsp">View Profile</a>
+                        <a href="Logout.jsp">Logout</a>
+                    </div>
+                <% 
+                    } 
+                %>
             </div>
         </nav>
     </header>
 
-    <div class="order-confirmation">
-        <div class="confirmation-content">
-            <div class="product-image">
-                <img src="<%= productImg %>" alt="<%= productName %>">
-            </div>
+    <div class="confirmation-container">
+        <div class="success-icon"></div>
+        
+        <h1 class="confirmation-title">Order Successfully Placed!</h1>
+        <p class="confirmation-subtitle">Thank you for shopping with Yaya Cosmetic</p>
 
-            <div class="order-details">
-                <h2><%= productName %></h2>
-                <p><%= productDesc %></p>
-
-                <div class="order-summary">
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span>RM <%= subtotal %></span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Shipping</span>
-                        <span><%= shipping == 0 ? "FREE" : "RM " + shipping %></span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Estimated Tax</span>
-                        <span>RM <%= tax %></span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>ESTIMATED TOTAL</span>
-                        <span>RM <%= total %></span>
-                    </div>
-                </div>
-
-                <div class="success-message">
-                    ORDER SUCCESSFULLY PLACED
-                </div>
-
-                <div class="action-buttons">
-                    <a href="History.jsp" class="btn btn-primary">VIEW ORDER HISTORY</a>
-                    <a href="Product.jsp" class="btn btn-secondary">CONTINUE SHOPPING</a>
+        <div class="order-details-card">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div class="order-ref">
+                    <div class="order-ref-label">Order Reference</div>
+                    <div class="order-ref-number"><%= orderRef %></div>
                 </div>
             </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Order Status</span>
+                <span class="status-badge">Confirmed</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Payment Method</span>
+                <span class="detail-value"><%= paymentDisplay %></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Items Ordered</span>
+                <span class="detail-value"><%= totalItems > 0 ? totalItems + " item(s)" : "Order processed" %></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Subtotal</span>
+                <span class="detail-value">RM <%= subtotal %></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Shipping</span>
+                <span class="detail-value">FREE</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Tax</span>
+                <span class="detail-value">RM <%= tax %></span>
+            </div>
+
+            <div class="detail-row total">
+                <span class="detail-label">Total Paid</span>
+                <span class="detail-value">RM <%= total %></span>
+            </div>
+        </div>
+
+        <div class="email-notice">
+            A confirmation email will be sent to your registered email address with tracking details.
+        </div>
+
+        <div class="action-buttons">
+            <a href="History.jsp" class="btn btn-primary">VIEW ORDER HISTORY</a>
+            <a href="Product.jsp" class="btn btn-secondary">CONTINUE SHOPPING</a>
         </div>
     </div>
 
@@ -404,7 +469,6 @@
             <h4>ABOUT YAYA</h4>
             <a href="#">HISTORY</a>
             <a href="#">WORK IN YAYA</a>
-            <a href="#">BELABOUR</a>
         </div>
         <div class="footer-col">
             <h4>ADDRESS</h4>

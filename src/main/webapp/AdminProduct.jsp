@@ -1,34 +1,46 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    // ===== ADMIN PRODUCT MANAGEMENT PAGE LOGIC =====
-    // This page allows administrators to view and edit products
+    // Store products in session for persistence (add/delete operations)
+    Map<String, String[]> productsData = (Map<String, String[]>) session.getAttribute("adminProducts");
     
-    // Define Product class to hold product information
-    // Later: move to com.mycompany.yayacosmetic.model.Product
-    class Product {
-        String id;
-        String name;
-        String description;
-        String price;
-        String image;
-        
-        Product(String id, String name, String description, String price, String image) {
-            this.id = id;
-            this.name = name;
-            this.description = description;
-            this.price = price;
-            this.image = image;
-        }
+    if (productsData == null) {
+        // Initialize with all 8 products: id -> [name, description, price, image]
+        productsData = new LinkedHashMap<>();
+        productsData.put("1", new String[]{"YAYA GOLD PALETTE", "Contain 12 shining color", "100", "pic product/3.png"});
+        productsData.put("2", new String[]{"YAYA BLUE PALETTE", "Contain 12 blue shade color", "100", "pic product/4.png"});
+        productsData.put("3", new String[]{"YAYA GREEN PALETTE", "Contain 12 earthy tone color", "100", "pic product/5.png"});
+        productsData.put("4", new String[]{"YAYA BLACK PALETTE", "Contain 12 dark shade color", "100", "pic product/6.png"});
+        productsData.put("5", new String[]{"YAYA PINK PALETTE", "Contain 12 pink shade color", "100", "pic product/7.png"});
+        productsData.put("6", new String[]{"YAYA ORANGE PALETTE", "Contain 12 fruity shade color", "100", "pic product/8.png"});
+        productsData.put("7", new String[]{"YAYA PURPLE PALETTE", "Contain 12 purple shade color", "100", "pic product/9.png"});
+        productsData.put("8", new String[]{"YAYA RED PALETTE", "Contain 12 red shade color", "100", "pic product/10.png"});
+        session.setAttribute("adminProducts", productsData);
     }
     
-    // Create sample product list (hardcoded for demonstration)
-    // Later with database: fetch using ProductDAO.getAllProducts()
-    List<Product> products = new ArrayList<>();
-    products.add(new Product("3", "YAYA GOLD PALLATE", "Contain 12 shining color", "RM 100", "pic product/3.png"));
-    products.add(new Product("4", "YAYA BLUE PALLATE", "Contain 12 blue shade color", "RM 100", "pic product/4.png"));
-    products.add(new Product("5", "YAYA GREEN PALLATE", "Contain 12 earthy tone color", "RM 100", "pic product/5.png"));
-    products.add(new Product("6", "YAYA BLACK PALLATE", "Contain 12 dark shade color", "RM 100", "pic product/6.png"));
+    // Handle delete action
+    String deleteId = request.getParameter("delete");
+    String successMessage = null;
+    String errorMessage = null;
+    
+    if (deleteId != null && productsData.containsKey(deleteId)) {
+        String[] deletedProduct = productsData.get(deleteId);
+        String deletedName = deletedProduct[0];
+        productsData.remove(deleteId);
+        session.setAttribute("adminProducts", productsData);
+        successMessage = "Product \"" + deletedName + "\" has been deleted successfully.";
+    }
+    
+    // Check for success message from add product
+    String addSuccess = request.getParameter("added");
+    if ("true".equals(addSuccess)) {
+        String addedName = request.getParameter("name");
+        successMessage = "Product \"" + (addedName != null ? addedName : "New Product") + "\" has been added successfully.";
+    }
+    
+    // Search functionality
+    String searchQuery = request.getParameter("search");
+    if (searchQuery == null) searchQuery = "";
 %>
 
 <!DOCTYPE html>
@@ -90,7 +102,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .page-title {
@@ -99,18 +113,119 @@
             margin: 0;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-form {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         .search-bar {
-            padding: 8px 15px;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            width: 250px;
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            width: 200px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #7b0d1e;
+        }
+
+        .search-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .add-product-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .add-product-btn:hover {
+            background-color: #218838;
+        }
+
+        .add-product-btn::before {
+            content: "+";
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background-color: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 10px;
+            border-left: 4px solid #7b0d1e;
+        }
+
+        .stat-item .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #7b0d1e;
+        }
+
+        .stat-item .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        /* Messages */
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .success-message .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #155724;
         }
 
         /* Product Grid */
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
         }
 
         .product-card {
@@ -118,18 +233,39 @@
             border-radius: 15px;
             padding: 20px;
             text-align: center;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .product-id-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #7b0d1e;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
         }
 
         .product-card img {
             width: 100%;
-            height: auto;
+            height: 200px;
+            object-fit: cover;
             border-radius: 10px;
             margin-bottom: 15px;
         }
 
         .product-card h3 {
-            font-size: 18px;
+            font-size: 16px;
             margin: 10px 0;
+            color: #333;
         }
 
         .product-card p {
@@ -140,25 +276,123 @@
 
         .product-card .price {
             font-weight: bold;
-            margin: 10px 0;
-            font-size: 16px;
+            margin: 15px 0;
+            font-size: 18px;
+            color: #7b0d1e;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
         }
 
         .edit-btn {
             background-color: #001a72;
             color: white;
-            border: none;
-            padding: 10px 30px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            margin-top: 10px;
         }
 
         .edit-btn:hover {
             background-color: #000f45;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .empty-state p {
+            margin-bottom: 20px;
+        }
+
+        /* Delete Confirmation Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 {
+            margin: 0 0 15px 0;
+            color: #dc3545;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .modal-content .product-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-actions .btn {
+            padding: 12px 30px;
+        }
+
+        .cancel-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background-color: #545b62;
         }
 
         /* Footer */
@@ -193,7 +427,25 @@
         @media (max-width: 768px) {
             .page-header {
                 flex-direction: column;
-                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .add-product-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .product-actions {
+                flex-direction: column;
             }
         }
     </style>
@@ -216,23 +468,93 @@
 
     <div class="product-container">
         <div class="page-header">
-            <h1 class="page-title">PRODUCTS</h1>
-            <input type="text" class="search-bar" placeholder="SEARCH">
+            <h1 class="page-title">PRODUCT MANAGEMENT</h1>
+            <div class="header-actions">
+                <form class="search-form" method="GET" action="AdminProduct.jsp">
+                    <input type="text" name="search" class="search-bar" placeholder="Search products..." value="<%= searchQuery %>">
+                    <button type="submit" class="search-btn">🔍</button>
+                </form>
+                <a href="AddProduct.jsp" class="add-product-btn">Add Product</a>
+            </div>
         </div>
 
-        <!-- Product grid displaying all products -->
+        <% if (successMessage != null) { %>
+            <div class="success-message" id="successMsg">
+                <span><strong>Success!</strong> <%= successMessage %></span>
+                <button class="close-btn" onclick="document.getElementById('successMsg').style.display='none'">&times;</button>
+            </div>
+        <% } %>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value"><%= productsData.size() %></div>
+                <div class="stat-label">Total Products</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">RM 100</div>
+                <div class="stat-label">Base Price</div>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
         <div class="product-grid">
-            <% for (Product product : products) { %>
-                <!-- Each product card shows product info and edit button -->
+            <% 
+            int displayCount = 0;
+            for (Map.Entry<String, String[]> entry : productsData.entrySet()) {
+                String productId = entry.getKey();
+                String[] data = entry.getValue();
+                String name = data[0];
+                String description = data[1];
+                String price = data[2];
+                String image = data[3];
+                
+                // Search filter
+                if (!searchQuery.isEmpty() && 
+                    !name.toLowerCase().contains(searchQuery.toLowerCase()) &&
+                    !description.toLowerCase().contains(searchQuery.toLowerCase())) {
+                    continue;
+                }
+                displayCount++;
+            %>
                 <div class="product-card">
-                    <img src="<%= product.image %>" alt="<%= product.name %>">
-                    <h3><%= product.name %></h3>
-                    <p><%= product.description %></p>
-                    <div class="price"><%= product.price %></div>
-                    <!-- Edit button redirects to EditProduct.jsp with product ID -->
-                    <button class="edit-btn" onclick="editProduct('<%= product.id %>', '<%= product.name %>')">EDIT</button>
+                    <span class="product-id-badge">ID: <%= productId %></span>
+                    <img src="<%= image %>" alt="<%= name %>">
+                    <h3><%= name %></h3>
+                    <p><%= description %></p>
+                    <div class="price">RM <%= price %></div>
+                    <div class="product-actions">
+                        <button class="btn edit-btn" onclick="window.location.href='EditProduct.jsp?id=<%= productId %>'">Edit</button>
+                        <button class="btn delete-btn" onclick="confirmDelete('<%= productId %>', '<%= name.replace("'", "\\'") %>')">Delete</button>
+                    </div>
                 </div>
             <% } %>
+        </div>
+
+        <% if (displayCount == 0) { %>
+            <div class="empty-state">
+                <h2>No Products Found</h2>
+                <% if (!searchQuery.isEmpty()) { %>
+                    <p>No products match your search "<%= searchQuery %>"</p>
+                    <a href="AdminProduct.jsp" class="btn edit-btn" style="display: inline-block; padding: 12px 25px;">Clear Search</a>
+                <% } else { %>
+                    <p>Start by adding your first product.</p>
+                    <a href="AddProduct.jsp" class="add-product-btn">Add Product</a>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content">
+            <h3>⚠️ Delete Product</h3>
+            <p>Are you sure you want to delete<br><span class="product-name" id="deleteProductName"></span>?</p>
+            <p style="font-size: 12px; color: #999;">This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn cancel-btn" onclick="closeModal()">Cancel</button>
+                <button class="btn delete-btn" id="confirmDeleteBtn">Delete</button>
+            </div>
         </div>
     </div>
 
@@ -259,13 +581,41 @@
     </footer>
 
     <script>
-        // JavaScript function to handle product editing
-        function editProduct(id, name) {
-            // Redirect to edit page with product ID as URL parameter
-            window.location.href = 'EditProduct.jsp?id=' + id;
-            
-            // Later with backend: EditProduct.jsp form will submit to UpdateProductServlet
+        var deleteProductId = null;
+
+        function confirmDelete(id, name) {
+            deleteProductId = id;
+            document.getElementById('deleteProductName').textContent = name;
+            document.getElementById('deleteModal').classList.add('active');
         }
+
+        function closeModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deleteProductId = null;
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (deleteProductId) {
+                window.location.href = 'AdminProduct.jsp?delete=' + deleteProductId;
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Auto-hide success message
+        setTimeout(function() {
+            var msg = document.getElementById('successMsg');
+            if (msg) {
+                msg.style.transition = 'opacity 0.5s';
+                msg.style.opacity = '0';
+                setTimeout(function() { msg.style.display = 'none'; }, 500);
+            }
+        }, 5000);
     </script>
 
 </body>

@@ -31,7 +31,7 @@ public class LoginServlet extends HttpServlet {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                // ✅ LOGIN SUCCESS
+                // LOGIN SUCCESS
                 HttpSession session = request.getSession();
 
                 session.setAttribute("userId", rs.getInt("userId"));
@@ -41,7 +41,7 @@ public class LoginServlet extends HttpServlet {
                 response.sendRedirect("HomePage.jsp");
 
             } else {
-                // ❌ LOGIN FAILED
+                // LOGIN FAILED
                 request.setAttribute("error", "Invalid email or password");
                 request.getRequestDispatcher("Login.jsp").forward(request, response);
             }

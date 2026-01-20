@@ -219,7 +219,7 @@
                      <a href="#" class="dropbtn">Profile</a>
                      <div class="dropdown-content">
                          <a href="Login.jsp">Login</a>
-                         <a href="SignUp.html">Sign up</a>
+                         <a href="Signup.jsp">Sign up</a>
                      </div>
                  <% 
                      } else { 

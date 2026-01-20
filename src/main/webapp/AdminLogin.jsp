@@ -170,7 +170,7 @@
 
                 <!-- Links to registration and user login -->
                 <div class="footer-links">
-                    <a href="Login.html">User Login</a>
+                    <a href="Login.jsp">User Login</a>
                 </div>
             </form>
         </div>
