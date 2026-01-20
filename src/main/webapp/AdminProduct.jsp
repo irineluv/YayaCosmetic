@@ -1,11 +1,17 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    // Store products in session for persistence (add/delete operations)
+    /*
+     * DATA SOURCE (DEMO):
+     * Products are stored in session under "adminProducts" to persist add/delete within a user session.
+     * Map format: productId -> [name, description, price, imagePath]
+     *
+     * Real-world: products should come from DB; session should not hold catalog data.
+     */
     Map<String, String[]> productsData = (Map<String, String[]>) session.getAttribute("adminProducts");
     
     if (productsData == null) {
-        // Initialize with all 8 products: id -> [name, description, price, image]
+        // Seed initial catalog with 8 products (shown on first load)
         productsData = new LinkedHashMap<>();
         productsData.put("1", new String[]{"YAYA GOLD PALETTE", "Contain 12 shining color", "100", "pic product/3.png"});
         productsData.put("2", new String[]{"YAYA BLUE PALETTE", "Contain 12 blue shade color", "100", "pic product/4.png"});
@@ -18,27 +24,45 @@
         session.setAttribute("adminProducts", productsData);
     }
     
-    // Handle delete action
+    /*
+     * DELETE FLOW (DEMO):
+     * Delete is triggered by GET param: ?delete=<productId>
+     *
+     * NOTE: This mutates state via GET (not ideal).
+     * Real-world: use POST + CSRF + redirect (PRG pattern).
+     */
     String deleteId = request.getParameter("delete");
     String successMessage = null;
     String errorMessage = null;
     
     if (deleteId != null && productsData.containsKey(deleteId)) {
+        // Capture deleted product name for UI feedback
         String[] deletedProduct = productsData.get(deleteId);
         String deletedName = deletedProduct[0];
+
+        // Remove from session map and persist back into session
         productsData.remove(deleteId);
         session.setAttribute("adminProducts", productsData);
+
         successMessage = "Product \"" + deletedName + "\" has been deleted successfully.";
     }
     
-    // Check for success message from add product
+    /*
+     * ADD SUCCESS FEEDBACK:
+     * After adding a product in AddProduct.jsp, user is redirected back here with:
+     * ?added=true&name=<productName>
+     */
     String addSuccess = request.getParameter("added");
     if ("true".equals(addSuccess)) {
         String addedName = request.getParameter("name");
         successMessage = "Product \"" + (addedName != null ? addedName : "New Product") + "\" has been added successfully.";
     }
     
-    // Search functionality
+    /*
+     * SEARCH:
+     * search=<text> filters products by name/description (case-insensitive).
+     * Filtering is applied during the render loop.
+     */
     String searchQuery = request.getParameter("search");
     if (searchQuery == null) searchQuery = "";
 %>
@@ -50,13 +74,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yaya Cosmetic - Admin Products</title>
     <style>
+        /* Base page styling */
         body { 
             margin: 0; 
             font-family: Arial, sans-serif; 
             background-color: #ffffff; 
         }
         
-        /* Header */
+        /* Header / navigation */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -92,12 +117,13 @@
             font-weight: 600;
         }
 
-        /* Main Content */
+        /* Main layout */
         .product-container {
             padding: 40px 5%;
             min-height: 60vh;
         }
 
+        /* Title row + actions (search + add) */
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -119,6 +145,7 @@
             gap: 15px;
         }
 
+        /* Search bar submits to same page using GET so query stays in URL */
         .search-form {
             display: flex;
             align-items: center;
@@ -147,6 +174,7 @@
             padding: 5px;
         }
 
+        /* Primary CTA button linking to AddProduct.jsp */
         .add-product-btn {
             background-color: #28a745;
             color: white;
@@ -173,7 +201,7 @@
             font-weight: bold;
         }
 
-        /* Stats Bar */
+        /* Stats summary */
         .stats-bar {
             display: flex;
             gap: 20px;
@@ -200,7 +228,7 @@
             text-transform: uppercase;
         }
 
-        /* Messages */
+        /* Success / feedback banner */
         .success-message {
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
@@ -221,13 +249,14 @@
             color: #155724;
         }
 
-        /* Product Grid */
+        /* Product grid layout */
         .product-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 25px;
         }
 
+        /* Product card */
         .product-card {
             background-color: #f9f6f2;
             border-radius: 15px;
@@ -242,6 +271,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
+        /* Visible product ID tag to help admins identify items */
         .product-id-badge {
             position: absolute;
             top: 15px;
@@ -281,6 +311,7 @@
             color: #7b0d1e;
         }
 
+        /* Card action buttons (edit/delete) */
         .product-actions {
             display: flex;
             gap: 10px;
@@ -317,7 +348,7 @@
             background-color: #c82333;
         }
 
-        /* Empty State */
+        /* Empty results state (e.g., no products match search) */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -334,7 +365,7 @@
             margin-bottom: 20px;
         }
 
-        /* Delete Confirmation Modal */
+        /* Delete confirmation modal */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -424,6 +455,7 @@
             line-height: 1.4;
         }
 
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .page-header {
                 flex-direction: column;
@@ -469,15 +501,21 @@
     <div class="product-container">
         <div class="page-header">
             <h1 class="page-title">PRODUCT MANAGEMENT</h1>
+
             <div class="header-actions">
+                <!-- Search uses GET so the query is bookmarkable/shareable -->
                 <form class="search-form" method="GET" action="AdminProduct.jsp">
-                    <input type="text" name="search" class="search-bar" placeholder="Search products..." value="<%= searchQuery %>">
+                    <input type="text" name="search" class="search-bar"
+                           placeholder="Search products..." value="<%= searchQuery %>">
                     <button type="submit" class="search-btn">🔍</button>
                 </form>
+
+                <!-- Navigate to AddProduct form -->
                 <a href="AddProduct.jsp" class="add-product-btn">Add Product</a>
             </div>
         </div>
 
+        <!-- Success banner used for add/delete operations -->
         <% if (successMessage != null) { %>
             <div class="success-message" id="successMsg">
                 <span><strong>Success!</strong> <%= successMessage %></span>
@@ -491,52 +529,72 @@
                 <div class="stat-value"><%= productsData.size() %></div>
                 <div class="stat-label">Total Products</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-value">RM 100</div>
-                <div class="stat-label">Base Price</div>
-            </div>
         </div>
 
         <!-- Product Grid -->
         <div class="product-grid">
-            <% 
+            <%
+            /*
+             * RENDER LOOP:
+             * Builds a card per product, with optional search filtering.
+             * displayCount is used to show the empty state if nothing matches.
+             */
             int displayCount = 0;
+
             for (Map.Entry<String, String[]> entry : productsData.entrySet()) {
                 String productId = entry.getKey();
                 String[] data = entry.getValue();
+
+                // Map indices: [0]=name, [1]=description, [2]=price, [3]=imagePath
                 String name = data[0];
                 String description = data[1];
                 String price = data[2];
                 String image = data[3];
-                
-                // Search filter
-                if (!searchQuery.isEmpty() && 
+
+                // Search filter (case-insensitive) against name + description
+                if (!searchQuery.isEmpty() &&
                     !name.toLowerCase().contains(searchQuery.toLowerCase()) &&
                     !description.toLowerCase().contains(searchQuery.toLowerCase())) {
                     continue;
                 }
+
                 displayCount++;
             %>
                 <div class="product-card">
                     <span class="product-id-badge">ID: <%= productId %></span>
                     <img src="<%= image %>" alt="<%= name %>">
+
                     <h3><%= name %></h3>
                     <p><%= description %></p>
                     <div class="price">RM <%= price %></div>
+
                     <div class="product-actions">
-                        <button class="btn edit-btn" onclick="window.location.href='EditProduct.jsp?id=<%= productId %>'">Edit</button>
-                        <button class="btn delete-btn" onclick="confirmDelete('<%= productId %>', '<%= name.replace("'", "\\'") %>')">Delete</button>
+                        <!-- Edit navigates to EditProduct.jsp with product id -->
+                        <button class="btn edit-btn"
+                                onclick="window.location.href='EditProduct.jsp?id=<%= productId %>'">
+                            Edit
+                        </button>
+
+                        <!-- Delete triggers confirmation modal first (no immediate delete) -->
+                        <button class="btn delete-btn"
+                                onclick="confirmDelete('<%= productId %>', '<%= name.replace("'", "\\'") %>')">
+                            Delete
+                        </button>
                     </div>
                 </div>
             <% } %>
         </div>
 
+        <!-- Empty state when nothing to show (e.g., no search matches) -->
         <% if (displayCount == 0) { %>
             <div class="empty-state">
                 <h2>No Products Found</h2>
                 <% if (!searchQuery.isEmpty()) { %>
                     <p>No products match your search "<%= searchQuery %>"</p>
-                    <a href="AdminProduct.jsp" class="btn edit-btn" style="display: inline-block; padding: 12px 25px;">Clear Search</a>
+                    <a href="AdminProduct.jsp" class="btn edit-btn"
+                       style="display: inline-block; padding: 12px 25px;">
+                        Clear Search
+                    </a>
                 <% } else { %>
                     <p>Start by adding your first product.</p>
                     <a href="AddProduct.jsp" class="add-product-btn">Add Product</a>
@@ -549,10 +607,15 @@
     <div class="modal-overlay" id="deleteModal">
         <div class="modal-content">
             <h3>⚠️ Delete Product</h3>
-            <p>Are you sure you want to delete<br><span class="product-name" id="deleteProductName"></span>?</p>
+            <p>
+                Are you sure you want to delete<br>
+                <span class="product-name" id="deleteProductName"></span>?
+            </p>
             <p style="font-size: 12px; color: #999;">This action cannot be undone.</p>
+
             <div class="modal-actions">
                 <button class="btn cancel-btn" onclick="closeModal()">Cancel</button>
+                <!-- Confirm button triggers the actual delete navigation -->
                 <button class="btn delete-btn" id="confirmDeleteBtn">Delete</button>
             </div>
         </div>
@@ -581,6 +644,11 @@
     </footer>
 
     <script>
+        /*
+         * Modal delete handling:
+         * - confirmDelete() opens modal and stores selected productId
+         * - confirm button redirects to ?delete=<id> to perform server-side delete
+         */
         var deleteProductId = null;
 
         function confirmDelete(id, name) {
@@ -594,20 +662,21 @@
             deleteProductId = null;
         }
 
+        // Executes delete by navigating to server-side handler (?delete=ID)
         document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
             if (deleteProductId) {
                 window.location.href = 'AdminProduct.jsp?delete=' + deleteProductId;
             }
         });
 
-        // Close modal when clicking outside
+        // UX: close modal when clicking on the overlay background
         document.getElementById('deleteModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeModal();
             }
         });
 
-        // Auto-hide success message
+        // UX: auto-hide success banner after a few seconds
         setTimeout(function() {
             var msg = document.getElementById('successMsg');
             if (msg) {
