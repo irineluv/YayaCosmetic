@@ -1,5 +1,15 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.*" %>
 <%
+    // Get cart count for badge
+    Map<String, Integer> cartItems = (Map<String, Integer>) session.getAttribute("cartItems");
+    int cartCount = 0;
+    if (cartItems != null) {
+        for (Integer qty : cartItems.values()) {
+            cartCount += qty;
+        }
+    }
+
     // ===== USER PROFILE PAGE LOGIC =====
     // This page displays user's profile information with edit options
     
@@ -102,6 +112,29 @@
         
         .dropdown:hover .dropbtn{
             color:#ccc;
+        }
+        
+        /* Cart Badge */
+        .cart-link {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: -10px;
+            right: -12px;
+            background-color: #ffd700;
+            color: #7b0d1e;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         
         /* Main Content */
@@ -260,7 +293,7 @@
         <nav>
             <a href="HomePage.jsp">HOME</a>
             <a href="Product.jsp">PRODUCT</a>
-            <a href="Cart.jsp">CART</a>
+            <a href="Cart.jsp" class="cart-link">CART<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount > 99 ? "99+" : cartCount %></span><% } %></a>
             <a href="History.jsp">HISTORY</a>
             <div class="dropdown">
                  <% 

@@ -179,15 +179,15 @@
         <h2 class="page-title">LOGIN</h2>
 
         <div class="login-card">
-            <form>
+            <form action="LoginServlet" method="post">
                 <div class="form-group">
                     <label>EMAIL</label>
-                    <input type="email" placeholder="ENTER EMAIL" required>
+                    <input type="email" name='email' placeholder="ENTER EMAIL" required>
                 </div>
 
                 <div class="form-group">
                     <label>PASSWORD</label>
-                    <input type="password" placeholder="ENTER PASSWORD" required>
+                    <input type="password" name='password' placeholder="ENTER PASSWORD" required>
                 </div>
 
                 <button type="submit" class="sign-in-btn">SIGN IN</button>

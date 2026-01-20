@@ -1,33 +1,67 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.*" %>
 <%
-    // ===== EDIT PRODUCT PAGE LOGIC =====
-    // This page displays a form to edit product details
-    // Accessed from AdminProduct.jsp when admin clicks EDIT button
+    // Get products from session
+    Map<String, String[]> productsData = (Map<String, String[]>) session.getAttribute("adminProducts");
     
-    // Get product ID from URL parameter (e.g., EditProduct.jsp?id=3)
+    if (productsData == null) {
+        response.sendRedirect("AdminProduct.jsp");
+        return;
+    }
+    
+    // Get product ID from URL parameter
     String productId = request.getParameter("id");
     
-    // Default product data (Gold Palette)
-    // Later with database: fetch using ProductDAO.getProductById(productId)
-    String productName = "YAYA GOLD PALLATE";
-    String productPrice = "100";
-    String productDesc = "Contain 12 shining color";
-    String productImage = "pic product/3.png";
+    // Handle form submission
+    String action = request.getParameter("action");
+    String errorMessage = null;
     
-    // Determine product details based on ID (hardcoded for now)
-    if ("4".equals(productId)) {
-        productName = "YAYA BLUE PALLATE";
-        productImage = "pic product/4.png";
-        productDesc = "Contain 12 blue shade color";
-    } else if ("5".equals(productId)) {
-        productName = "YAYA GREEN PALLATE";
-        productImage = "pic product/5.png";
-        productDesc = "Contain 12 earthy tone color";
-    } else if ("6".equals(productId)) {
-        productName = "YAYA BLACK PALLATE";
-        productImage = "pic product/6.png";
-        productDesc = "Contain 12 dark shade color";
+    if ("update".equals(action) && productId != null) {
+        String name = request.getParameter("name");
+        String description = request.getParameter("description");
+        String price = request.getParameter("price");
+        String image = request.getParameter("image");
+        
+        // Validation
+        if (name == null || name.trim().isEmpty()) {
+            errorMessage = "Product name is required.";
+        } else if (description == null || description.trim().isEmpty()) {
+            errorMessage = "Product description is required.";
+        } else if (price == null || price.trim().isEmpty()) {
+            errorMessage = "Product price is required.";
+        } else {
+            try {
+                int priceValue = Integer.parseInt(price.trim());
+                if (priceValue <= 0) {
+                    errorMessage = "Price must be greater than 0.";
+                } else {
+                    // Update product
+                    if (image == null || image.trim().isEmpty()) {
+                        image = productsData.get(productId)[3]; // Keep existing image
+                    }
+                    productsData.put(productId, new String[]{name.trim(), description.trim(), price.trim(), image.trim()});
+                    session.setAttribute("adminProducts", productsData);
+                    
+                    response.sendRedirect("AdminProduct.jsp?updated=true&name=" + java.net.URLEncoder.encode(name.trim(), "UTF-8"));
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                errorMessage = "Price must be a valid number.";
+            }
+        }
     }
+    
+    // Get product data
+    if (productId == null || !productsData.containsKey(productId)) {
+        response.sendRedirect("AdminProduct.jsp");
+        return;
+    }
+    
+    String[] productData = productsData.get(productId);
+    String productName = productData[0];
+    String productDesc = productData[1];
+    String productPrice = productData[2];
+    String productImage = productData[3];
 %>
 
 <!DOCTYPE html>
@@ -85,17 +119,57 @@
             min-height: 60vh;
         }
 
+        .page-header {
+            margin-bottom: 30px;
+        }
+
         .page-title {
             font-size: 36px;
             font-weight: bold;
-            margin: 0 0 30px 0;
+            margin: 0 0 10px 0;
         }
 
-        .edit-form {
-            max-width: 600px;
+        .product-id-badge {
+            display: inline-block;
+            background-color: #7b0d1e;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .form-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .form-section {
+            flex: 1;
+            min-width: 350px;
             background-color: #f9f9f9;
-            padding: 40px;
-            border-radius: 10px;
+            padding: 35px;
+            border-radius: 15px;
+        }
+
+        .form-section h2 {
+            font-size: 18px;
+            margin: 0 0 25px 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            color: #333;
+        }
+
+        /* Error Message */
+        .error-message {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 14px;
         }
 
         .form-group {
@@ -110,22 +184,111 @@
             color: #333;
         }
 
+        .form-group label .required {
+            color: #dc3545;
+        }
+
         .form-group input,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
             font-family: Arial, sans-serif;
             box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #7b0d1e;
         }
 
         .form-group textarea {
             resize: vertical;
-            min-height: 80px;
+            min-height: 100px;
         }
 
+        .form-group .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .price-input-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .price-prefix {
+            background-color: #e9ecef;
+            padding: 14px 15px;
+            border: 2px solid #ddd;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .price-input-wrapper input {
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            flex: 0 0 300px;
+            background-color: #f9f6f2;
+            padding: 35px;
+            border-radius: 15px;
+            height: fit-content;
+        }
+
+        .preview-section h2 {
+            font-size: 18px;
+            margin: 0 0 25px 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            color: #333;
+        }
+
+        .preview-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .preview-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .preview-card h3 {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #333;
+        }
+
+        .preview-card p {
+            font-size: 13px;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .preview-card .price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #7b0d1e;
+            margin-top: 15px;
+        }
+
+        /* Buttons */
         .button-group {
             display: flex;
             gap: 15px;
@@ -133,7 +296,7 @@
         }
 
         .btn {
-            padding: 12px 30px;
+            padding: 14px 30px;
             border: none;
             border-radius: 8px;
             font-size: 14px;
@@ -142,11 +305,14 @@
             text-decoration: none;
             display: inline-block;
             text-align: center;
+            text-transform: uppercase;
+            transition: all 0.3s;
         }
 
         .btn-primary {
             background-color: #001a72;
             color: white;
+            flex: 1;
         }
 
         .btn-primary:hover {
@@ -154,25 +320,44 @@
         }
 
         .btn-secondary {
-            background-color: #999;
+            background-color: #6c757d;
             color: white;
         }
 
         .btn-secondary:hover {
-            background-color: #777;
+            background-color: #545b62;
         }
 
-        .product-preview {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            text-align: center;
+        /* Image Options */
+        .image-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        .product-preview img {
-            max-width: 200px;
-            border-radius: 10px;
+        .image-option {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .image-option:hover {
+            border-color: #7b0d1e;
+        }
+
+        .image-option.selected {
+            border-color: #7b0d1e;
+            background-color: #fff5f5;
+        }
+
+        .image-option img {
+            width: 100%;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
         }
 
         /* Footer */
@@ -203,6 +388,25 @@
             margin: 8px 0;
             line-height: 1.4;
         }
+
+        @media (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+            }
+
+            .form-section,
+            .preview-section {
+                min-width: 100%;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .image-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
@@ -222,53 +426,99 @@
     </header>
 
     <div class="edit-container">
-        <h1 class="page-title">EDIT PRODUCT</h1>
-
-        <!-- Edit form container -->
-        <div class="edit-form">
-            <!-- Form submits to UpdateProductServlet (backend) -->
-            <!-- Later: servlet will update product in database and redirect back to AdminProduct.jsp -->
-            <form action="UpdateProductServlet" method="POST">
-                <!-- Hidden field to pass product ID to servlet -->
-                <input type="hidden" name="id" value="<%= productId %>">
-                
-                <!-- Product name input -->
-                <div class="form-group">
-                    <label>Product Name:</label>
-                    <input type="text" name="name" value="<%= productName %>" required>
-                </div>
-                
-                <!-- Price input (numeric only) -->
-                <div class="form-group">
-                    <label>Price (RM):</label>
-                    <input type="number" name="price" value="<%= productPrice %>" required>
-                </div>
-                
-                <!-- Description textarea -->
-                <div class="form-group">
-                    <label>Description:</label>
-                    <textarea name="description" required><%= productDesc %></textarea>
-                </div>
-                
-                <!-- Image path input -->
-                <div class="form-group">
-                    <label>Image Path:</label>
-                    <input type="text" name="image" value="<%= productImage %>" required>
-                </div>
-
-                <!-- Preview of current product image -->
-                <div class="product-preview">
-                    <p><strong>Current Image:</strong></p>
-                    <img src="<%= productImage %>" alt="<%= productName %>">
-                </div>
-                
-                <!-- Action buttons -->
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">UPDATE PRODUCT</button>
-                    <a href="AdminProduct.jsp" class="btn btn-secondary">CANCEL</a>
-                </div>
-            </form>
+        <div class="page-header">
+            <h1 class="page-title">EDIT PRODUCT</h1>
+            <span class="product-id-badge">Product ID: <%= productId %></span>
         </div>
+
+        <% if (errorMessage != null) { %>
+            <div class="error-message">
+                <strong>Error:</strong> <%= errorMessage %>
+            </div>
+        <% } %>
+
+        <form method="POST" action="EditProduct.jsp?id=<%= productId %>&action=update">
+            <div class="form-container">
+                <!-- Form Section -->
+                <div class="form-section">
+                    <h2>Product Information</h2>
+
+                    <div class="form-group">
+                        <label>Product Name <span class="required">*</span></label>
+                        <input type="text" name="name" id="productName" required 
+                               value="<%= productName %>" maxlength="100"
+                               oninput="updatePreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description <span class="required">*</span></label>
+                        <textarea name="description" id="productDesc" required 
+                                  maxlength="500" oninput="updatePreview()"><%= productDesc %></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Price (RM) <span class="required">*</span></label>
+                        <div class="price-input-wrapper">
+                            <span class="price-prefix">RM</span>
+                            <input type="number" name="price" id="productPrice" required 
+                                   value="<%= productPrice %>" min="1" max="9999"
+                                   oninput="updatePreview()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Product Image</label>
+                        <input type="text" name="image" id="productImage" 
+                               value="<%= productImage %>" 
+                               onchange="updatePreview()">
+                        <p class="hint">Select from existing images or enter custom path.</p>
+                        
+                        <div class="image-options">
+                            <div class="image-option <%= "pic product/3.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/3.png')">
+                                <img src="pic product/3.png" alt="Gold">
+                            </div>
+                            <div class="image-option <%= "pic product/4.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/4.png')">
+                                <img src="pic product/4.png" alt="Blue">
+                            </div>
+                            <div class="image-option <%= "pic product/5.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/5.png')">
+                                <img src="pic product/5.png" alt="Green">
+                            </div>
+                            <div class="image-option <%= "pic product/6.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/6.png')">
+                                <img src="pic product/6.png" alt="Black">
+                            </div>
+                            <div class="image-option <%= "pic product/7.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/7.png')">
+                                <img src="pic product/7.png" alt="Pink">
+                            </div>
+                            <div class="image-option <%= "pic product/8.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/8.png')">
+                                <img src="pic product/8.png" alt="Orange">
+                            </div>
+                            <div class="image-option <%= "pic product/9.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/9.png')">
+                                <img src="pic product/9.png" alt="Purple">
+                            </div>
+                            <div class="image-option <%= "pic product/10.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/10.png')">
+                                <img src="pic product/10.png" alt="Red">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">Update Product</button>
+                        <a href="AdminProduct.jsp" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="preview-section">
+                    <h2>Live Preview</h2>
+                    <div class="preview-card">
+                        <img src="<%= productImage %>" alt="Preview" id="previewImg">
+                        <h3 id="previewName"><%= productName %></h3>
+                        <p id="previewDesc"><%= productDesc %></p>
+                        <div class="price" id="previewPrice">RM <%= productPrice %></div>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 
     <footer>
@@ -292,6 +542,35 @@
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
+
+    <script>
+        function updatePreview() {
+            var name = document.getElementById('productName').value || 'Product Name';
+            var desc = document.getElementById('productDesc').value || 'Product description';
+            var price = document.getElementById('productPrice').value || '0';
+            var image = document.getElementById('productImage').value;
+
+            document.getElementById('previewName').textContent = name;
+            document.getElementById('previewDesc').textContent = desc;
+            document.getElementById('previewPrice').textContent = 'RM ' + price;
+
+            if (image) {
+                document.getElementById('previewImg').src = image;
+            }
+        }
+
+        function selectImage(imagePath) {
+            document.getElementById('productImage').value = imagePath;
+            
+            // Update selected state
+            document.querySelectorAll('.image-option').forEach(function(opt) {
+                opt.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            updatePreview();
+        }
+    </script>
 
 </body>
 </html>
