@@ -1,28 +1,38 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    // Get products from session
+    /*
+     * Admin products are stored in session ("adminProducts") as:
+     *   productId -> [name, description, price, imagePath]
+     * This is NOT database-backed; changes reset when session resets.
+     */
     Map<String, String[]> productsData = (Map<String, String[]>) session.getAttribute("adminProducts");
     
+    // If products aren't initialized, force admin back to AdminProduct.jsp (which initializes them)
     if (productsData == null) {
         response.sendRedirect("AdminProduct.jsp");
         return;
     }
     
-    // Get product ID from URL parameter
+    // Product ID comes from URL query string (?id=...)
     String productId = request.getParameter("id");
     
-    // Handle form submission
+    /*
+     * Update flow:
+     * - form posts to EditProduct.jsp?id=...&action=update
+     * - request.getParameter("action") decides whether to validate + update
+     */
     String action = request.getParameter("action");
     String errorMessage = null;
     
     if ("update".equals(action) && productId != null) {
+        // Read form fields (name/description/price/image)
         String name = request.getParameter("name");
         String description = request.getParameter("description");
         String price = request.getParameter("price");
         String image = request.getParameter("image");
         
-        // Validation
+        // Basic validations (server-side)
         if (name == null || name.trim().isEmpty()) {
             errorMessage = "Product name is required.";
         } else if (description == null || description.trim().isEmpty()) {
@@ -31,18 +41,31 @@
             errorMessage = "Product price is required.";
         } else {
             try {
+                // Price validated as integer > 0
                 int priceValue = Integer.parseInt(price.trim());
                 if (priceValue <= 0) {
                     errorMessage = "Price must be greater than 0.";
                 } else {
-                    // Update product
+                    /*
+                     * Image field is optional:
+                     * - if blank, keep existing image
+                     * - otherwise save the custom path
+                     */
                     if (image == null || image.trim().isEmpty()) {
                         image = productsData.get(productId)[3]; // Keep existing image
                     }
+
+                    // Update product data in session map
                     productsData.put(productId, new String[]{name.trim(), description.trim(), price.trim(), image.trim()});
                     session.setAttribute("adminProducts", productsData);
                     
-                    response.sendRedirect("AdminProduct.jsp?updated=true&name=" + java.net.URLEncoder.encode(name.trim(), "UTF-8"));
+                    /*
+                     * Redirect back to AdminProduct.jsp with a success flag.
+                     * AdminProduct.jsp must read updated=true and name=... if it wants to display success.
+                     */
+                    response.sendRedirect(
+                        "AdminProduct.jsp?updated=true&name=" + java.net.URLEncoder.encode(name.trim(), "UTF-8")
+                    );
                     return;
                 }
             } catch (NumberFormatException e) {
@@ -51,12 +74,16 @@
         }
     }
     
-    // Get product data
+    /*
+     * If productId missing or invalid, redirect to AdminProduct.jsp.
+     * Prevents direct access with invalid id.
+     */
     if (productId == null || !productsData.containsKey(productId)) {
         response.sendRedirect("AdminProduct.jsp");
         return;
     }
     
+    // Load current product data for initial form values + preview
     String[] productData = productsData.get(productId);
     String productName = productData[0];
     String productDesc = productData[1];
@@ -71,6 +98,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Product - Yaya Cosmetic</title>
     <style>
+        /* Basic page styling */
         body { 
             margin: 0; 
             font-family: Arial, sans-serif; 
@@ -145,6 +173,7 @@
             flex-wrap: wrap;
         }
 
+        /* Left side: Form */
         .form-section {
             flex: 1;
             min-width: 350px;
@@ -161,7 +190,7 @@
             color: #333;
         }
 
-        /* Error Message */
+        /* Validation error display */
         .error-message {
             background-color: #f8d7da;
             border: 1px solid #f5c6cb;
@@ -217,6 +246,7 @@
             margin-top: 5px;
         }
 
+        /* Price input with RM prefix */
         .price-input-wrapper {
             display: flex;
             align-items: center;
@@ -236,7 +266,7 @@
             border-radius: 0 8px 8px 0;
         }
 
-        /* Preview Section */
+        /* Right side: live preview card */
         .preview-section {
             flex: 0 0 300px;
             background-color: #f9f6f2;
@@ -328,7 +358,7 @@
             background-color: #545b62;
         }
 
-        /* Image Options */
+        /* Image picker thumbnails */
         .image-options {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -437,12 +467,13 @@
             </div>
         <% } %>
 
+        <!-- POST form. action carries id + action=update in the URL -->
         <form method="POST" action="EditProduct.jsp?id=<%= productId %>&action=update">
             <div class="form-container">
-                <!-- Form Section -->
                 <div class="form-section">
                     <h2>Product Information</h2>
 
+                    <!-- Name: required. On input updates the preview -->
                     <div class="form-group">
                         <label>Product Name <span class="required">*</span></label>
                         <input type="text" name="name" id="productName" required 
@@ -450,12 +481,14 @@
                                oninput="updatePreview()">
                     </div>
 
+                    <!-- Description: required. On input updates the preview -->
                     <div class="form-group">
                         <label>Description <span class="required">*</span></label>
                         <textarea name="description" id="productDesc" required 
                                   maxlength="500" oninput="updatePreview()"><%= productDesc %></textarea>
                     </div>
 
+                    <!-- Price: number input with min/max. Still validated again server-side -->
                     <div class="form-group">
                         <label>Price (RM) <span class="required">*</span></label>
                         <div class="price-input-wrapper">
@@ -466,13 +499,15 @@
                         </div>
                     </div>
 
+                    <!-- Image: can be typed manually or chosen from thumbnails -->
                     <div class="form-group">
                         <label>Product Image</label>
                         <input type="text" name="image" id="productImage" 
                                value="<%= productImage %>" 
                                onchange="updatePreview()">
                         <p class="hint">Select from existing images or enter custom path.</p>
-                        
+
+                        <!-- Thumbnail picker. Selected class based on current productImage -->
                         <div class="image-options">
                             <div class="image-option <%= "pic product/3.png".equals(productImage) ? "selected" : "" %>" onclick="selectImage('pic product/3.png')">
                                 <img src="pic product/3.png" alt="Gold">
@@ -507,7 +542,7 @@
                     </div>
                 </div>
 
-                <!-- Preview Section -->
+                <!-- Live preview panel (client-side) -->
                 <div class="preview-section">
                     <h2>Live Preview</h2>
                     <div class="preview-card">
@@ -525,7 +560,6 @@
         <div class="footer-col">
             <h4>ABOUT YAYA</h4>
             <a href="#">HISTORY</a>
-            <a href="#">WORK IN YAYA</a>
             <a href="#">BELABOUR</a>
         </div>
         <div class="footer-col">
@@ -544,6 +578,10 @@
     </footer>
 
     <script>
+        /*
+         * Updates the preview card while admin edits fields.
+         * This is purely visual; real update happens server-side on submit.
+         */
         function updatePreview() {
             var name = document.getElementById('productName').value || 'Product Name';
             var desc = document.getElementById('productDesc').value || 'Product description';
@@ -559,13 +597,20 @@
             }
         }
 
+        /*
+         * Sets the image input field to a chosen thumbnail.
+         * NOTE: This function relies on `event.currentTarget` but does NOT receive the `event` param.
+         * In many browsers this will break because `event` may be undefined.
+         */
         function selectImage(imagePath) {
             document.getElementById('productImage').value = imagePath;
             
-            // Update selected state
+            // Update selected state (visual highlight)
             document.querySelectorAll('.image-option').forEach(function(opt) {
                 opt.classList.remove('selected');
             });
+
+            // BUG RISK: `event` is not guaranteed to exist here
             event.currentTarget.classList.add('selected');
             
             updatePreview();
