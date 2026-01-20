@@ -1,9 +1,15 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    // Get admin profile from session
+    /*
+     * DATA SOURCE (TEMP):
+     * Admin profile is stored in session under "adminProfile".
+     * Map keys: name, email, phone, password
+     * NOTE: This is demo-level storage (not persistent / not secure for real apps).
+     */
     Map<String, String> adminProfile = (Map<String, String>) session.getAttribute("adminProfile");
-    
+
+    // Initialize default profile if session is empty (prevents NPE and supports demo/testing)
     if (adminProfile == null) {
         adminProfile = new LinkedHashMap<>();
         adminProfile.put("name", "Aiya Johan");
@@ -12,61 +18,91 @@
         adminProfile.put("password", "admin123");
         session.setAttribute("adminProfile", adminProfile);
     }
-    
-    // Get field to edit from URL parameter
+
+    /*
+     * ROUTING (FIELD-DRIVEN):
+     * The "field" URL parameter decides which edit form to show:
+     * - field=name     -> edit name form
+     * - field=phone    -> edit phone form
+     * - field=password -> change password form
+     */
     String field = request.getParameter("field");
-    
-    // Handle form submission
+
+    /*
+     * REQUEST FLOW:
+     * - Default: display form based on "field"
+     * - When submitted: POST to same page with action=update
+     * - On success: redirect to AdminProfile.jsp (PRG pattern to prevent resubmission)
+     */
     String action = request.getParameter("action");
     String errorMsg = null;
-    
+
     if ("update".equals(action)) {
+
+        // Update: Full Name
         if ("name".equals(field)) {
             String newName = request.getParameter("name");
+
+            // Server-side validation (do not rely on HTML required alone)
             if (newName != null && !newName.trim().isEmpty()) {
                 adminProfile.put("name", newName.trim());
                 session.setAttribute("adminProfile", adminProfile);
+
+                // Redirect after POST (PRG pattern)
                 response.sendRedirect("AdminProfile.jsp?success=true&updated=name");
                 return;
             } else {
                 errorMsg = "Name cannot be empty.";
             }
+
+        // Update: Phone Number
         } else if ("phone".equals(field)) {
             String newPhone = request.getParameter("phone");
+
             if (newPhone != null && !newPhone.trim().isEmpty()) {
                 adminProfile.put("phone", newPhone.trim());
                 session.setAttribute("adminProfile", adminProfile);
+
                 response.sendRedirect("AdminProfile.jsp?success=true&updated=phone");
                 return;
             } else {
                 errorMsg = "Phone number cannot be empty.";
             }
+
+        // Update: Password (requires current password + confirm check)
         } else if ("password".equals(field)) {
             String currentPassword = request.getParameter("currentPassword");
             String newPassword = request.getParameter("newPassword");
             String confirmPassword = request.getParameter("confirmPassword");
-            
-            // Validate current password
+
+            // Validate current password before allowing changes
             if (!adminProfile.get("password").equals(currentPassword)) {
                 errorMsg = "Current password is incorrect.";
+
+            // Basic policy: minimum length
             } else if (newPassword == null || newPassword.length() < 6) {
                 errorMsg = "New password must be at least 6 characters.";
+
+            // Confirm new password matches
             } else if (!newPassword.equals(confirmPassword)) {
                 errorMsg = "New passwords do not match.";
+
             } else {
+                // Store updated password in session (demo approach only)
                 adminProfile.put("password", newPassword);
                 session.setAttribute("adminProfile", adminProfile);
+
                 response.sendRedirect("AdminProfile.jsp?success=true&updated=password");
                 return;
             }
         }
     }
-    
-    // Get current values
+
+    // Current values used to prefill the form inputs
     String currentName = adminProfile.get("name");
     String currentPhone = adminProfile.get("phone");
-    
-    // Determine page title and form content based on field
+
+    // Dynamic title based on what is being edited
     String pageTitle = "Edit Profile";
     if ("name".equals(field)) {
         pageTitle = "Edit Full Name";
@@ -84,13 +120,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= pageTitle %> - Yaya Cosmetic Admin</title>
     <style>
+        /* Base page styling */
         body { 
             margin: 0; 
             font-family: Arial, sans-serif; 
             background-color: #ffffff; 
         }
         
-        /* Header */
+        /* Header / navigation */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -126,7 +163,7 @@
             font-weight: 600;
         }
 
-        /* Main Content */
+        /* Main Content container */
         .edit-container {
             padding: 40px 10%;
             min-height: 60vh;
@@ -138,6 +175,7 @@
             margin: 0 0 30px 0;
         }
 
+        /* Form card */
         .edit-form {
             max-width: 500px;
             background-color: #f9f9f9;
@@ -146,7 +184,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        /* Error Message */
+        /* Server-side error message */
         .error-message {
             background-color: #f8d7da;
             border: 1px solid #f5c6cb;
@@ -157,6 +195,7 @@
             font-size: 14px;
         }
 
+        /* Form controls */
         .form-group {
             margin-bottom: 25px;
         }
@@ -191,7 +230,32 @@
             margin-top: 5px;
         }
 
-        /* Password strength indicator */
+        /* Password input: adds eye toggle button to show/hide */
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper input {
+            padding-right: 50px;
+        }
+
+        .eye-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .eye-toggle:hover {
+            color: #333;
+        }
+
+        /* Password requirements feedback box (UI-only validation helper) */
         .password-requirements {
             background-color: #fff;
             border: 1px solid #ddd;
@@ -229,6 +293,7 @@
             color: #28a745;
         }
 
+        /* Primary/secondary actions */
         .button-group {
             display: flex;
             gap: 15px;
@@ -297,6 +362,7 @@
             line-height: 1.4;
         }
 
+        /* Responsive tweak: stack buttons and reduce padding on small screens */
         @media (max-width: 768px) {
             .button-group {
                 flex-direction: column;
@@ -315,6 +381,7 @@
             <img src="LOGO.png" alt="Yaya Logo" class="logo-img">
             <div class="brand-name">Yaya Cosmetic</div>
         </div>
+        <!-- Admin navigation -->
         <nav>
             <a href="AdminHome.jsp">HOME</a>
             <a href="AdminProduct.jsp">PRODUCT</a>
@@ -328,6 +395,7 @@
         <h1 class="page-title"><%= pageTitle.toUpperCase() %></h1>
 
         <div class="edit-form">
+            <!-- Server-side validation feedback -->
             <% if (errorMsg != null) { %>
                 <div class="error-message">
                     <strong>Error:</strong> <%= errorMsg %>
@@ -371,22 +439,33 @@
                 <form method="POST" action="AdminEditProfile.jsp?field=password&action=update" onsubmit="return validatePassword()">
                     <div class="form-group">
                         <label>Current Password</label>
-                        <input type="password" name="currentPassword" id="currentPassword" required 
-                               placeholder="Enter your current password">
+                        <div class="password-input-wrapper">
+                            <input type="password" name="currentPassword" id="currentPassword" required 
+                                   placeholder="Enter your current password">
+                            <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('currentPassword', this)">👁️</button>
+                        </div>
+                        <p class="hint">Your current password is required to make changes.</p>
                     </div>
                     
                     <div class="form-group">
                         <label>New Password</label>
-                        <input type="password" name="newPassword" id="newPassword" required 
-                               placeholder="Enter new password" oninput="checkPasswordStrength()">
+                        <div class="password-input-wrapper">
+                            <input type="password" name="newPassword" id="newPassword" required 
+                                   placeholder="Enter new password" oninput="checkPasswordStrength()">
+                            <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('newPassword', this)">👁️</button>
+                        </div>
                     </div>
                     
                     <div class="form-group">
                         <label>Confirm New Password</label>
-                        <input type="password" name="confirmPassword" id="confirmPassword" required 
-                               placeholder="Confirm new password" oninput="checkPasswordMatch()">
+                        <div class="password-input-wrapper">
+                            <input type="password" name="confirmPassword" id="confirmPassword" required 
+                                   placeholder="Confirm new password" oninput="checkPasswordMatch()">
+                            <button type="button" class="eye-toggle" onclick="togglePasswordVisibility('confirmPassword', this)">👁️</button>
+                        </div>
                     </div>
 
+                    <!-- UI-only: gives live feedback before submit (server still validates) -->
                     <div class="password-requirements">
                         <h4>Password Requirements:</h4>
                         <div class="requirement" id="req-length">At least 6 characters</div>
@@ -400,7 +479,7 @@
                 </form>
 
             <% } else { %>
-                <!-- Invalid field -->
+                <!-- Fallback: invalid / missing field parameter -->
                 <p>Invalid field specified.</p>
                 <a href="AdminProfile.jsp" class="btn btn-secondary">Back to Profile</a>
             <% } %>
@@ -430,25 +509,47 @@
     </footer>
 
     <script>
+        /*
+         * Password visibility toggle:
+         * Switches input type between password/text and updates button icon.
+         */
+        function togglePasswordVisibility(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+
+        /*
+         * Password requirement checks (UI helper):
+         * Updates visual status while the user types.
+         * Server-side still enforces these rules.
+         */
         function checkPasswordStrength() {
             var password = document.getElementById('newPassword').value;
             var reqLength = document.getElementById('req-length');
-            
-            // Check length
+
+            // Requirement: minimum length 6
             if (password.length >= 6) {
                 reqLength.classList.add('valid');
             } else {
                 reqLength.classList.remove('valid');
             }
-            
+
+            // Also refresh match indicator whenever password changes
             checkPasswordMatch();
         }
 
+        // Requirement: newPassword and confirmPassword must match
         function checkPasswordMatch() {
             var password = document.getElementById('newPassword').value;
             var confirm = document.getElementById('confirmPassword').value;
             var reqMatch = document.getElementById('req-match');
-            
+
             if (password && confirm && password === confirm) {
                 reqMatch.classList.add('valid');
             } else {
@@ -456,20 +557,25 @@
             }
         }
 
+        /*
+         * Client-side blocking validation:
+         * Prevents form submit if basic rules fail (UX improvement).
+         * Server-side validation still exists and is the source of truth.
+         */
         function validatePassword() {
             var password = document.getElementById('newPassword').value;
             var confirm = document.getElementById('confirmPassword').value;
-            
+
             if (password.length < 6) {
                 alert('Password must be at least 6 characters long.');
                 return false;
             }
-            
+
             if (password !== confirm) {
                 alert('Passwords do not match.');
                 return false;
             }
-            
+
             return true;
         }
     </script>
