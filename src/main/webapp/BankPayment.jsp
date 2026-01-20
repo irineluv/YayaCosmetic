@@ -1,18 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    /*
-     * PAYMENT CONTEXT (DEMO):
-     * - amount is pulled from URL query param (?amount=110)
-     * - orderRef is generated using current timestamp
-     *
-     * Real-world: amount must be server-calculated from cart/order data,
-     * not trusted from request parameters.
-     */
+    // Get order details from session/parameters
     String totalAmount = request.getParameter("amount");
     if (totalAmount == null) totalAmount = "110";
     
-    // Demo order reference (unique enough for demo; not safe for real gateway reconciliation)
     String orderRef = "YC" + System.currentTimeMillis();
 %>
 <!DOCTYPE html>
@@ -22,14 +14,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MYBank Online Payment Gateway</title>
     <style>
-        /* Global reset */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
-        /* Full-page bank "portal" look */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -78,7 +68,6 @@
             color: #ffd700;
         }
         
-        /* "Secure" badge UI decoration */
         .secure-badge {
             display: flex;
             align-items: center;
@@ -94,7 +83,7 @@
             content: "🔒";
         }
         
-        /* Centered payment box */
+        /* Main Content */
         .main-content {
             flex: 1;
             display: flex;
@@ -112,7 +101,7 @@
             overflow: hidden;
         }
         
-        /* Payment Header / Amount display */
+        /* Payment Header */
         .payment-header {
             background: linear-gradient(135deg, #0d47a1, #1976d2);
             color: white;
@@ -150,7 +139,6 @@
             margin-top: 5px;
         }
         
-        /* Prefix "RM" in UI only (totalAmount already numeric-like text) */
         .amount-value::before {
             content: "RM ";
             font-size: 20px;
@@ -162,7 +150,7 @@
             opacity: 0.7;
         }
         
-        /* Payment form layout */
+        /* Payment Form */
         .payment-form {
             padding: 30px;
         }
@@ -179,7 +167,6 @@
             border-bottom: 2px solid #e0e0e0;
         }
         
-        /* Bank selection grid (UI only - no real bank code captured) */
         .bank-options {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -216,7 +203,6 @@
             color: #666;
         }
         
-        /* Card input fields */
         .form-group {
             margin-bottom: 20px;
         }
@@ -292,7 +278,7 @@
             color: #f44336;
         }
         
-        /* Security notice is purely UI copy for demo */
+        /* Security Notice */
         .security-notice {
             display: flex;
             align-items: center;
@@ -324,7 +310,7 @@
             text-decoration: none;
         }
         
-        /* Demo Notice (important so lecturer knows it's dummy) */
+        /* Demo Notice */
         .demo-banner {
             background: #ff9800;
             color: white;
@@ -334,7 +320,7 @@
             font-weight: bold;
         }
         
-        /* Loading overlay simulates payment processing */
+        /* Loading Overlay */
         .loading-overlay {
             display: none;
             position: fixed;
@@ -396,18 +382,15 @@
                 <div class="merchant-info">YAYA COSMETIC SDN BHD</div>
                 <div class="amount-display">
                     <div class="amount-label">Total Amount</div>
-                    <!-- UI displays "RM " via CSS ::before -->
                     <div class="amount-value"><%= totalAmount %></div>
                     <div class="order-ref">Order Reference: <%= orderRef %></div>
                 </div>
             </div>
 
-            <!-- Note: form is not posted to server, it is intercepted by JS (demo flow) -->
             <form class="payment-form" onsubmit="processPayment(event)">
                 <div class="form-section">
                     <h3>Select Your Bank</h3>
                     <div class="bank-options">
-                        <!-- Default selected bank option -->
                         <div class="bank-option selected" onclick="selectBank(this)">
                             <div class="bank-option-icon">🏦</div>
                             <div class="bank-option-name">MYBank</div>
@@ -439,7 +422,6 @@
                     <h3>Card Details</h3>
                     <div class="form-group">
                         <label>Card Number</label>
-                        <!-- Input masking is done via JS event listener using placeholder selector -->
                         <input type="text" placeholder="1234 5678 9012 3456" maxlength="19" required>
                     </div>
                     <div class="form-group">
@@ -449,18 +431,15 @@
                     <div class="card-row">
                         <div class="form-group">
                             <label>Expiry Date</label>
-                            <!-- MM/YY formatting done in JS via placeholder selector -->
                             <input type="text" placeholder="MM/YY" maxlength="5" required>
                         </div>
                         <div class="form-group">
                             <label>CVV</label>
-                            <!-- password type hides CVV input (demo only, still on client-side) -->
                             <input type="password" placeholder="***" maxlength="4" required>
                         </div>
                     </div>
                 </div>
 
-                <!-- Pay button shows amount (still not validated server-side) -->
                 <button type="submit" class="btn-pay">Pay RM <%= totalAmount %></button>
                 <button type="button" class="btn-cancel" onclick="cancelPayment()">Cancel Transaction</button>
 
@@ -485,60 +464,38 @@
     </div>
 
     <script>
-        /*
-         * UI bank selection:
-         * This only changes CSS class; it does not store bank selection anywhere.
-         * If you need it for receipt/history, store selected bank in a hidden input.
-         */
         function selectBank(element) {
             document.querySelectorAll('.bank-option').forEach(opt => opt.classList.remove('selected'));
             element.classList.add('selected');
         }
 
-        /*
-         * Demo payment handler:
-         * - Prevent default form submit
-         * - Show loading overlay
-         * - After 3 seconds, redirect to PlaceOrder.jsp with success status and ref
-         *
-         * Real-world: never redirect success based purely on client-side timing.
-         */
         function processPayment(event) {
             event.preventDefault();
             
-            // Show loading overlay
+            // Show loading
             document.getElementById('loadingOverlay').classList.add('active');
             
-            // Simulate gateway processing delay
+            // Simulate payment processing
             setTimeout(function() {
-                // Redirect to order confirmation page
+                // Redirect to order confirmation
                 window.location.href = 'PlaceOrder.jsp?status=success&ref=<%= orderRef %>';
             }, 3000);
         }
 
-        /*
-         * Cancel flow:
-         * Sends user back to Cart.jsp after confirmation.
-         * Note: if you want to preserve checkout state, redirect to Checkout.jsp instead.
-         */
         function cancelPayment() {
             if (confirm('Are you sure you want to cancel this transaction?')) {
                 window.location.href = 'Cart.jsp';
             }
         }
 
-        /*
-         * Input formatting:
-         * WARNING: You are selecting inputs by placeholder text.
-         * If placeholder changes, your JS breaks silently.
-         * Better: add IDs (cardNumber, expiryDate) and select by ID.
-         */
+        // Format card number input
         document.querySelector('input[placeholder="1234 5678 9012 3456"]').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
             let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
             e.target.value = formatted;
         });
 
+        // Format expiry date input
         document.querySelector('input[placeholder="MM/YY"]').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length >= 2) {
