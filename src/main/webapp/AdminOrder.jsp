@@ -1,11 +1,17 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    // Store orders in session so status changes persist
+    /*
+     * DATA SOURCE (DEMO):
+     * Orders are stored in session under "adminOrders" so status changes persist per session.
+     * Map format: orderId -> [customerName, productName, date, address, subtotal, status]
+     *
+     * Real-world: orders should come from DB; session should not hold business data.
+     */
     Map<String, String[]> ordersData = (Map<String, String[]>) session.getAttribute("adminOrders");
-    
+
     if (ordersData == null) {
-        // Initialize with sample data: id -> [name, product, date, address, subtotal, status]
+        // Initialize sample data: id -> [name, product, date, address, subtotal, status]
         ordersData = new LinkedHashMap<>();
         ordersData.put("01", new String[]{"ALYA MASARAH", "YAYA GOLD PALETTE", "21/05/2024", "Mount Height, Bukit Benar, Selangor", "RM 100", "DELIVERED"});
         ordersData.put("02", new String[]{"ANIS ZIRA", "YAYA WHITE PALETTE", "21/05/2024", "Bukit Kumbang, Selayang, Selangor", "RM 100", "DELIVERED"});
@@ -14,23 +20,42 @@
         ordersData.put("05", new String[]{"SARAH AHMAD", "YAYA PINK PALETTE", "10/05/2025", "Taman Melati, Gombak, Selangor", "RM 200", "PENDING"});
         session.setAttribute("adminOrders", ordersData);
     }
-    
-    // Handle status update
+
+    /*
+     * STATUS UPDATE FLOW:
+     * This page supports an update via query params:
+     * - updateId = order id
+     * - newStatus = selected status
+     *
+     * NOTE: This uses GET (not ideal). Real-world: use POST to update state + redirect (PRG pattern).
+     */
     String updateId = request.getParameter("updateId");
     String newStatus = request.getParameter("newStatus");
     String successMessage = null;
-    
+
     if (updateId != null && newStatus != null && ordersData.containsKey(updateId)) {
         String[] orderData = ordersData.get(updateId);
         String oldStatus = orderData[5];
+
+        // Mutate status field (index 5) and persist back into session map
         orderData[5] = newStatus;
         ordersData.put(updateId, orderData);
         session.setAttribute("adminOrders", ordersData);
+
+        // Feedback message displayed at top of page
         successMessage = "Order #" + updateId + " status updated from " + oldStatus + " to " + newStatus;
     }
-    
-    // Status options for dropdown
+
+    // Fixed list of allowed statuses used for dropdown options
     String[] statusOptions = {"PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"};
+
+    /*
+     * FILTER:
+     * filter=STATUS filters the table. Default is ALL.
+     * Note: filtering is done server-side by skipping rows in the rendering loop.
+     */
+    String filterStatus = request.getParameter("filter");
+    if (filterStatus == null) filterStatus = "ALL";
 %>
 
 <!DOCTYPE html>
@@ -40,13 +65,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yaya Cosmetic - Order Management</title>
     <style>
+        /* Base page styling */
         body { 
             margin: 0; 
             font-family: Arial, sans-serif; 
             background-color: #ffffff; 
         }
         
-        /* Header */
+        /* Header / navigation */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -82,23 +108,60 @@
             font-weight: 600;
         }
 
-        /* Main Content */
+        /* Page layout */
         .order-container {
             padding: 40px 5%;
             min-height: 60vh;
         }
 
+        /* Header row: title + filter + stats */
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .page-title {
             font-size: 36px;
             font-weight: bold;
             margin: 0;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Filter UI */
+        .filter-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-section label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .filter-dropdown {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .filter-dropdown:focus {
+            outline: none;
+            border-color: #7b0d1e;
         }
 
         .order-stats {
@@ -113,7 +176,7 @@
             font-weight: bold;
         }
 
-        /* Success Message */
+        /* Success message (shown after status update) */
         .success-message {
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
@@ -134,7 +197,7 @@
             color: #155724;
         }
 
-        /* Table */
+        /* Table wrapper enables horizontal scroll on smaller screens */
         .table-wrapper {
             overflow-x: auto;
             background-color: #fff;
@@ -189,7 +252,7 @@
             color: #666;
         }
 
-        /* Status Dropdown Styling */
+        /* Status column contains select + update button */
         .status-cell {
             min-width: 180px;
         }
@@ -200,6 +263,11 @@
             gap: 8px;
         }
 
+        /*
+         * Status dropdown:
+         * Uses status-specific CSS classes (status-pending, status-processing, etc.)
+         * to color the select to match the chosen status.
+         */
         .status-dropdown {
             padding: 8px 12px;
             border-radius: 6px;
@@ -247,7 +315,10 @@
             color: #721c24;
         }
 
-        /* Update Button */
+        /*
+         * Update button:
+         * Disabled by default. Enabled only if user changes dropdown selection.
+         */
         .update-btn {
             padding: 8px 15px;
             background-color: #001a72;
@@ -272,7 +343,7 @@
             transform: none;
         }
 
-        /* Status Legend */
+        /* Legend helps users understand the color/status mapping */
         .status-legend {
             display: flex;
             gap: 20px;
@@ -328,6 +399,7 @@
             line-height: 1.4;
         }
 
+        /* Responsive tweaks for small screens */
         @media (max-width: 768px) {
             .order-table {
                 font-size: 12px;
@@ -375,13 +447,30 @@
     <div class="order-container">
         <div class="page-header">
             <h1 class="page-title">ORDER MANAGEMENT</h1>
-            <div class="order-stats">
-                <span class="stat-badge" style="background-color: #e3f2fd; color: #1565c0;">
-                    Total Orders: <%= ordersData.size() %>
-                </span>
+            <div class="header-controls">
+                <div class="filter-section">
+                    <label>Filter by Status:</label>
+                    <!-- Filter reloads page with ?filter=STATUS -->
+                    <select class="filter-dropdown" onchange="filterOrders(this.value)">
+                        <option value="ALL" <%= "ALL".equals(filterStatus) ? "selected" : "" %>>All Orders</option>
+                        <option value="PENDING" <%= "PENDING".equals(filterStatus) ? "selected" : "" %>>Pending</option>
+                        <option value="PROCESSING" <%= "PROCESSING".equals(filterStatus) ? "selected" : "" %>>Processing</option>
+                        <option value="SHIPPED" <%= "SHIPPED".equals(filterStatus) ? "selected" : "" %>>Shipped</option>
+                        <option value="DELIVERED" <%= "DELIVERED".equals(filterStatus) ? "selected" : "" %>>Delivered</option>
+                        <option value="CANCELLED" <%= "CANCELLED".equals(filterStatus) ? "selected" : "" %>>Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="order-stats">
+                    <!-- Total orders in session (not affected by filter) -->
+                    <span class="stat-badge" style="background-color: #e3f2fd; color: #1565c0;">
+                        Total Orders: <%= ordersData.size() %>
+                    </span>
+                </div>
             </div>
         </div>
 
+        <!-- Shows after a successful update -->
         <% if (successMessage != null) { %>
             <div class="success-message" id="successMsg">
                 <span><strong>Success!</strong> <%= successMessage %></span>
@@ -389,7 +478,7 @@
             </div>
         <% } %>
 
-        <!-- Status Legend -->
+        <!-- Legend for status colors -->
         <div class="status-legend">
             <div class="legend-item"><span class="legend-dot pending"></span> Pending</div>
             <div class="legend-item"><span class="legend-dot processing"></span> Processing</div>
@@ -412,7 +501,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% 
+                    <%
+                    /*
+                     * RENDER LOOP:
+                     * Iterates through all orders. If filterStatus is set, mismatched rows are skipped.
+                     * statusClass is used to color the dropdown based on current status.
+                     */
                     for (Map.Entry<String, String[]> entry : ordersData.entrySet()) {
                         String orderId = entry.getKey();
                         String[] data = entry.getValue();
@@ -422,7 +516,13 @@
                         String address = data[3];
                         String subtotal = data[4];
                         String status = data[5];
-                        
+
+                        // Skip rows that don't match the selected filter
+                        if (!"ALL".equals(filterStatus) && !filterStatus.equals(status)) {
+                            continue;
+                        }
+
+                        // Used to assign status-specific styling to dropdown
                         String statusClass = "status-" + status.toLowerCase();
                     %>
                         <tr>
@@ -432,15 +532,29 @@
                             <td><%= date %></td>
                             <td class="address-cell"><%= address %></td>
                             <td><strong><%= subtotal %></strong></td>
+
                             <td class="status-cell">
+                                <!--
+                                    UPDATE FORM (DEMO):
+                                    Submits updateId + newStatus back to this page.
+                                    NOTE: This is GET for simplicity. In real apps use POST for updates.
+                                -->
                                 <form method="GET" action="AdminOrder.jsp" class="status-dropdown-wrapper">
                                     <input type="hidden" name="updateId" value="<%= orderId %>">
+
+                                    <!--
+                                        onChange:
+                                        - Updates the dropdown color class to match selected status
+                                        - Enables Update button only if selection differs from current status
+                                     -->
                                     <select name="newStatus" class="status-dropdown <%= statusClass %>" 
                                             onchange="this.className='status-dropdown status-' + this.value.toLowerCase(); this.form.querySelector('.update-btn').disabled = (this.value === '<%= status %>');">
                                         <% for (String opt : statusOptions) { %>
                                             <option value="<%= opt %>" <%= opt.equals(status) ? "selected" : "" %>><%= opt %></option>
                                         <% } %>
                                     </select>
+
+                                    <!-- Disabled initially; enabled only when dropdown changes -->
                                     <button type="submit" class="update-btn" disabled>Update</button>
                                 </form>
                             </td>
@@ -474,7 +588,10 @@
     </footer>
 
     <script>
-        // Auto-hide success message after 5 seconds
+        /*
+         * UX: auto-hide success message to reduce clutter after update.
+         * First fades out, then removes from layout.
+         */
         setTimeout(function() {
             var msg = document.getElementById('successMsg');
             if (msg) {
@@ -483,6 +600,15 @@
                 setTimeout(function() { msg.style.display = 'none'; }, 500);
             }
         }, 5000);
+        
+        /*
+         * Filter navigation:
+         * Reload the page with a filter query parameter.
+         * (Server-side loop will skip rows that don't match.)
+         */
+        function filterOrders(status) {
+            window.location.href = 'AdminOrder.jsp?filter=' + status;
+        }
     </script>
 
 </body>
