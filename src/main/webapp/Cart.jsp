@@ -218,6 +218,11 @@
         <% 
         } else {
             for (String id : cart) {
+                // --- FRONT-END MOCKUP LOGIC ---
+                // Define 'qty' here so the compiler doesn't crash
+                int qty = 2; 
+                int price = 100; // Mock price
+                // ------------------------------
                 // Determine which product to show based on ID
                 String name = "YAYA GOLD PALLATE";
                 String img = "pic product/3.png";
@@ -237,9 +242,15 @@
                     <h2><%= name %></h2>
                     <p><%= desc %></p>
                     <div class="item-price">RM 100</div>
+
                 </div>
-                <div class="action-btns">
-                    <button class="btn">EDIT</button>
+                        
+                <div class="action-btns">                   
+                    <form action="Cart.jsp" method="POST" style="margin-top: 10px;">
+                        <label>Qty:</label>
+                        <input type="number" name="newQty" value="<%= qty %>" min="1" max="10" style="width: 50px;">
+                        <button type="submit" class="btn" style="padding: 2px 10px; font-size: 12px; background-color: #7b0d1e;">UPDATE</button>
+                    </form>
                     <a href="Cart.jsp?action=remove&id=<%= id %>" class="btn" style="text-decoration:none; text-align:center; background-color:#001a72;">REMOVE</a>
                 </div>
             </div>

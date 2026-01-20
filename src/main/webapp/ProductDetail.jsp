@@ -64,8 +64,7 @@
             color: #333;
         }
 
-        /* Consistent Header */
-       header {
+        header {
             background-color: #7b0d1e; /* Deep Red/Burgundy */
             color: white;
             padding: 10px 50px;
@@ -105,8 +104,8 @@
             display:flex;
             align-items:center;
         }
-
-                .dropdown{
+        
+        .dropdown{
             position: relative;
             display: inline-block;
         }
@@ -144,7 +143,6 @@
         .dropdown:hover .dropbtn{
             color:#ccc;
         }
-        
 
         /* Search Bar Area */
         .search-container {
@@ -286,15 +284,15 @@
 <body>
 
     <header>
-        <div class="logo-area">
+        <div class="logo-container">
             <img src="LOGO.png" alt="Yaya Logo" class="logo-img">
-            <div class="brand-name">Yaya Cosmetic</div>
+            <div class="brand-name">YAYA COSMETIC</div>
         </div>
         <nav>
-            <a href="HomePage.jsp">HOME</a>
-            <a href="Product.jsp">PRODUCT</a>
-            <a href="Cart.jsp">CART</a>
-            <a href="History.jsp">HISTORY</a>
+            <a href="HomePage.jsp">Home</a>
+            <a href="Product.jsp">Product</a>
+            <a href="Cart.jsp">Cart</a>
+            <a href="#">History</a>
             <div class="dropdown">
                  <% 
                      // Check if a user is logged in

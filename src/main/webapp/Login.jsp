@@ -194,7 +194,7 @@
 
                <div class="footer-links">
                     <div class="left-links">
-                        <a href="SignUp.html">Don't have account?</a>
+                        <a href="Signup.jsp">Don't have account?</a>
                         <a href="AdminLogin.jsp" style="color: #611515;">ADMIN? Click Here to Login</a>
                     </div>
 
