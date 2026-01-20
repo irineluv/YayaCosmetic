@@ -1,37 +1,25 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    /*
-     * DATA SOURCE (TEMP):
-     * Products are stored in session under "adminProducts".
-     * Map<productId, String[]{ name, description, price, imagePath }>
-     * NOTE: This is not persistent (resets when session expires / server restarts).
-     */
+    // Get products from session
     Map<String, String[]> productsData = (Map<String, String[]>) session.getAttribute("adminProducts");
-
-    // Ensure session storage exists so the page can run without NullPointerException
+    
     if (productsData == null) {
-        productsData = new LinkedHashMap<>(); // LinkedHashMap keeps insertion order (useful for consistent listing)
+        productsData = new LinkedHashMap<>();
         session.setAttribute("adminProducts", productsData);
     }
-
-    /*
-     * REQUEST FLOW:
-     * - Default: show form
-     * - POST to AddProduct.jsp?action=add triggers "add" branch below
-     * - On success: redirect back to AdminProduct.jsp with query params
-     */
+    
+    // Handle form submission
     String action = request.getParameter("action");
     String errorMessage = null;
-
+    
     if ("add".equals(action)) {
-        // Read user input from form fields
         String name = request.getParameter("name");
         String description = request.getParameter("description");
         String price = request.getParameter("price");
         String image = request.getParameter("image");
-
-        // Basic server-side validation (do not rely on HTML "required" alone)
+        
+        // Validation
         if (name == null || name.trim().isEmpty()) {
             errorMessage = "Product name is required.";
         } else if (description == null || description.trim().isEmpty()) {
@@ -40,45 +28,35 @@
             errorMessage = "Product price is required.";
         } else {
             try {
-                // Validate numeric price and business rule: must be > 0
+                // Validate price is a number
                 int priceValue = Integer.parseInt(price.trim());
                 if (priceValue <= 0) {
                     errorMessage = "Price must be greater than 0.";
                 } else {
-                    /*
-                     * ID GENERATION (SESSION-BASED):
-                     * Find the highest numeric key currently in the map, then +1.
-                     * NOTE: Works only if IDs are numeric strings.
-                     */
+                    // Generate new product ID
                     int maxId = 0;
                     for (String id : productsData.keySet()) {
                         try {
                             int idNum = Integer.parseInt(id);
                             if (idNum > maxId) maxId = idNum;
-                        } catch (NumberFormatException e) {
-                            // Ignore non-numeric keys to avoid breaking ID generation
-                        }
+                        } catch (NumberFormatException e) {}
                     }
                     String newId = String.valueOf(maxId + 1);
-
-                    // Default image fallback if admin leaves it empty
+                    
+                    // Set default image if not provided
                     if (image == null || image.trim().isEmpty()) {
                         image = "pic product/default.png";
                     }
-
-                    // Store product in session (trim to keep data clean)
+                    
+                    // Add new product
                     productsData.put(newId, new String[]{name.trim(), description.trim(), price.trim(), image.trim()});
                     session.setAttribute("adminProducts", productsData);
-
-                    // PRG pattern: redirect after POST to prevent duplicate form resubmission on refresh
-                    response.sendRedirect(
-                        "AdminProduct.jsp?added=true&name=" +
-                        java.net.URLEncoder.encode(name.trim(), "UTF-8")
-                    );
+                    
+                    // Redirect to product list with success message
+                    response.sendRedirect("AdminProduct.jsp?added=true&name=" + java.net.URLEncoder.encode(name.trim(), "UTF-8"));
                     return;
                 }
             } catch (NumberFormatException e) {
-                // Handles cases like "abc" or decimals if your UI expects integers only
                 errorMessage = "Price must be a valid number.";
             }
         }
@@ -92,14 +70,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product - Yaya Cosmetic Admin</title>
     <style>
-        /* Page-level base styles */
         body { 
             margin: 0; 
             font-family: Arial, sans-serif; 
             background-color: #ffffff; 
         }
-
-        /* Header / navigation bar */
+        
+        /* Header */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -114,19 +91,19 @@
             align-items: center; 
             gap: 15px; 
         }
-
+        
         .logo-img { 
             height: 45px; 
             width: auto; 
         }
-
+        
         .brand-name { 
             font-family: 'Times New Roman', serif; 
             font-size: 24px; 
             letter-spacing: 2px; 
             text-transform: uppercase; 
         }
-
+        
         nav a {
             color: white;
             text-decoration: none;
@@ -135,7 +112,7 @@
             font-weight: 600;
         }
 
-        /* Main layout container */
+        /* Main Content */
         .add-container {
             padding: 40px 10%;
             min-height: 60vh;
@@ -156,7 +133,6 @@
             font-size: 14px;
         }
 
-        /* Two-column layout: form (left) + live preview (right) */
         .form-container {
             display: flex;
             gap: 40px;
@@ -179,7 +155,7 @@
             color: #333;
         }
 
-        /* Server-side validation message */
+        /* Error Message */
         .error-message {
             background-color: #f8d7da;
             border: 1px solid #f5c6cb;
@@ -190,7 +166,6 @@
             font-size: 14px;
         }
 
-        /* Form controls */
         .form-group {
             margin-bottom: 25px;
         }
@@ -238,7 +213,6 @@
             margin-top: 5px;
         }
 
-        /* Price input: "RM" prefix + numeric input */
         .price-input-wrapper {
             display: flex;
             align-items: center;
@@ -258,7 +232,7 @@
             border-radius: 0 8px 8px 0;
         }
 
-        /* Live preview card: mirrors the form input using JS */
+        /* Preview Section */
         .preview-section {
             flex: 0 0 300px;
             background-color: #f9f6f2;
@@ -322,7 +296,7 @@
             margin-top: 15px;
         }
 
-        /* Primary/secondary actions */
+        /* Buttons */
         .button-group {
             display: flex;
             gap: 15px;
@@ -362,7 +336,7 @@
             background-color: #545b62;
         }
 
-        /* Image picker grid (quick selection of predefined images) */
+        /* Image Options */
         .image-options {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -423,7 +397,6 @@
             line-height: 1.4;
         }
 
-        /* Responsive: stack form + preview on smaller screens */
         @media (max-width: 768px) {
             .form-container {
                 flex-direction: column;
@@ -451,7 +424,6 @@
             <img src="LOGO.png" alt="Yaya Logo" class="logo-img">
             <div class="brand-name">Yaya Cosmetic</div>
         </div>
-        <!-- Admin navigation -->
         <nav>
             <a href="AdminHome.jsp">HOME</a>
             <a href="AdminProduct.jsp">PRODUCT</a>
@@ -467,17 +439,15 @@
             <p class="page-subtitle">Fill in the details below to add a new product to your catalog.</p>
         </div>
 
-        <!-- Render server-side validation errors (if any) -->
         <% if (errorMessage != null) { %>
             <div class="error-message">
                 <strong>Error:</strong> <%= errorMessage %>
             </div>
         <% } %>
 
-        <!-- POST form: triggers server-side "add" logic (action=add) -->
         <form method="POST" action="AddProduct.jsp?action=add" id="addProductForm">
             <div class="form-container">
-                <!-- Form Section (Admin input) -->
+                <!-- Form Section -->
                 <div class="form-section">
                     <h2>Product Information</h2>
 
@@ -513,8 +483,7 @@
                                placeholder="pic product/3.png" 
                                onchange="updatePreview()">
                         <p class="hint">Select from existing images or enter custom path.</p>
-
-                        <!-- Quick pick predefined images -->
+                        
                         <div class="image-options">
                             <div class="image-option" onclick="selectImage('pic product/3.png')">
                                 <img src="pic product/3.png" alt="Gold">
@@ -543,14 +512,13 @@
                         </div>
                     </div>
 
-                    <!-- Primary action submits; cancel returns to listing -->
                     <div class="button-group">
                         <button type="submit" class="btn btn-primary">Add Product</button>
                         <a href="AdminProduct.jsp" class="btn btn-secondary">Cancel</a>
                     </div>
                 </div>
 
-                <!-- Preview Section (Client-side only) -->
+                <!-- Preview Section -->
                 <div class="preview-section">
                     <h2>Live Preview</h2>
                     <div class="preview-card">
@@ -589,11 +557,6 @@
     </footer>
 
     <script>
-        /*
-         * Live preview sync:
-         * Mirrors the form inputs into the preview card in real-time.
-         * This is UI-only and does NOT affect server-side validation/storage.
-         */
         function updatePreview() {
             var name = document.getElementById('productName').value || 'Product Name';
             var desc = document.getElementById('productDesc').value || 'Product description will appear here';
@@ -604,31 +567,23 @@
             document.getElementById('previewDesc').textContent = desc;
             document.getElementById('previewPrice').textContent = 'RM ' + price;
 
-            // Render image preview; fallback if path is invalid
             var previewImageDiv = document.getElementById('previewImage');
             if (image) {
-                previewImageDiv.innerHTML =
-                    '<img src="' + image + '" alt="Preview" ' +
-                    'onerror="this.parentElement.innerHTML=\'<span>Image not found</span>\'">';
+                previewImageDiv.innerHTML = '<img src="' + image + '" alt="Preview" onerror="this.parentElement.innerHTML=\'<span>Image not found</span>\'">';
             } else {
                 previewImageDiv.innerHTML = '<span>No image selected</span>';
             }
         }
 
-        /*
-         * Image option click handler:
-         * Sets the image path into the input, highlights the selected thumbnail,
-         * then refreshes the live preview.
-         */
         function selectImage(imagePath) {
             document.getElementById('productImage').value = imagePath;
-
-            // Clear previous selected state, then set current selection
+            
+            // Update selected state
             document.querySelectorAll('.image-option').forEach(function(opt) {
                 opt.classList.remove('selected');
             });
             event.currentTarget.classList.add('selected');
-
+            
             updatePreview();
         }
     </script>
