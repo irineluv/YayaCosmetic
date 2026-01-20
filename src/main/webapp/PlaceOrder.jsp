@@ -1,14 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    /*
-     * Cart is stored in session as Map<productId, quantity>.
-     * This page reads the cart, builds an "orderItems" list for display,
-     * calculates totals, then clears the cart.
-     */
+    // Get cart items from session before clearing
     Map<String, Integer> cartItems = (Map<String, Integer>) session.getAttribute("cartItems");
     
-    // orderItems stores: [id, name, img, desc, price, qty] as String[] for easy JSP rendering
+    // Store order info before clearing cart
     List<String[]> orderItems = new ArrayList<>();
     int subtotal = 0;
     int totalQty = 0;
@@ -19,10 +15,6 @@
             int qty = entry.getValue();
             totalQty += qty;
             
-            /*
-             * Product data is hardcoded based on product ID.
-             * In a real system, these would come from DB (product table).
-             */
             String name = "YAYA GOLD PALETTE";
             String img = "pic product/3.png";
             String desc = "Contain 12 shining color";
@@ -37,30 +29,20 @@
             else if ("7".equals(id)) { name = "YAYA PURPLE PALETTE"; img = "pic product/9.png"; desc = "Contain 12 purple shade color"; }
             else if ("8".equals(id)) { name = "YAYA RED PALETTE"; img = "pic product/10.png"; desc = "Contain 12 red shade color"; }
             
-            // Totals are calculated using a fixed unit price of 100
             subtotal += price * qty;
-
-            // Store this item for display rendering below
             orderItems.add(new String[]{id, name, img, desc, String.valueOf(price), String.valueOf(qty)});
         }
         
-        /*
-         * Cart is cleared after capturing order data.
-         * This simulates "checkout completed".
-         */
+        // Clear cart after storing order info
         cartItems.clear();
         session.setAttribute("cartItems", cartItems);
     }
     
-    // Pricing summary (fixed values)
     int shipping = 0;
     int tax = 10;
     int total = subtotal + shipping + tax;
     
-    /*
-     * If cart is empty, the page still shows a default sample order.
-     * NOTE: This is demo behavior and not a real checkout validation.
-     */
+    // If no items, use defaults for display
     if (orderItems.isEmpty()) {
         orderItems.add(new String[]{"1", "YAYA GOLD PALETTE", "pic product/3.png", "Contain 12 shining color", "100", "1"});
         subtotal = 100;
@@ -76,7 +58,243 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yaya Cosmetic - Order Placed</title>
     <style>
-        /* ... styles are presentation-only ... */
+        body { 
+            margin: 0; 
+            font-family: Arial, sans-serif; 
+            background-color: #ffffff; 
+        }
+        
+        /* Header */
+        header {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 10px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            height: 50px;
+            width: auto;
+        }
+
+        .brand-name {
+            font-size: 28px;
+            font-family: 'Times New Roman', serif;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        nav {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Main Content */
+        .order-container {
+            padding: 40px 10%;
+            min-height: 50vh;
+        }
+
+        .order-content {
+            background-color: #f9f6f2;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .order-item {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 25px;
+        }
+
+        .order-item:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .product-section {
+            flex: 0 0 250px;
+        }
+
+        .product-section img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-info h2 {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .product-info p {
+            color: #666;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .order-summary {
+            flex: 0 0 200px;
+            text-align: right;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .summary-row .label {
+            color: #666;
+        }
+
+        .summary-row .value {
+            font-weight: 500;
+        }
+
+        .summary-row.total {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .summary-row.total .label {
+            color: #333;
+        }
+
+        .success-message {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .success-message h3 {
+            color: #7b0d1e;
+            font-size: 22px;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background-color: #001a72;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #000f45;
+        }
+
+        .btn-secondary {
+            background-color: #7b0d1e;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a0a15;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 40px 60px;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+        }
+
+        .footer-col {
+            flex: 1;
+        }
+
+        .footer-col h4 {
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .footer-col p, .footer-col a {
+            display: block;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 13px;
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .order-item {
+                flex-direction: column;
+            }
+            
+            .product-section {
+                flex: none;
+                width: 100%;
+                max-width: 250px;
+                margin: 0 auto;
+            }
+            
+            .order-summary {
+                flex: none;
+                width: 100%;
+                text-align: left;
+                margin-top: 20px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -97,8 +315,6 @@
 
     <div class="order-container">
         <div class="order-content">
-
-            <!-- Render every ordered item -->
             <% for (String[] item : orderItems) { 
                 String itemName = item[1];
                 String itemImg = item[2];
@@ -119,7 +335,6 @@
                     <% } %>
                 </div>
                 
-                <!-- Summary uses totals calculated for the whole order -->
                 <div class="order-summary">
                     <div class="summary-row">
                         <span class="label">Subtotal</span>
@@ -153,7 +368,24 @@
     </div>
 
     <footer>
-        <!-- Footer is static -->
+        <div class="footer-col">
+            <h4>ABOUT YAYA</h4>
+            <a href="#">HISTORY</a>
+            <a href="#">WORK IN YAYA</a>
+        </div>
+        <div class="footer-col">
+            <h4>ADDRESS</h4>
+            <p>BANGI AVENUE HEIGHT</p>
+            <p>DAMANSARA UTAMA</p>
+            <p>96029 DAMANSARA</p>
+            <p>SELANGOR</p>
+        </div>
+        <div class="footer-col">
+            <h4>CONTACT</h4>
+            <p>03-78279388 (OFFICE HOUR)</p>
+            <p>yayacosmetic@hotline.com (official email)</p>
+            <p>@yayacosmeticofficial (Instagram)</p>
+        </div>
     </footer>
 
 </body>
