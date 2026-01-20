@@ -1,28 +1,19 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    /*
-     * Read cart from session.
-     * If empty, redirect back (prevents direct access to checkout without items).
-     */
+    // Get cart items from session
     Map<String, Integer> cartItems = (Map<String, Integer>) session.getAttribute("cartItems");
     if (cartItems == null || cartItems.isEmpty()) {
         response.sendRedirect("Cart.jsp");
         return;
     }
     
-    /*
-     * Selected items come from Cart.jsp (POST selectedItems).
-     * Fallback: if nothing passed, select all items with qty > 0.
-     *
-     * NOTE: This is good defensive logic because your Cart.jsp sometimes uses hidden input.
-     */
+    // Get selected items from form (POST) or use all items with qty > 0
     String[] selectedIds = request.getParameterValues("selectedItems");
     Set<String> selectedSet = new HashSet<>();
     
     if (selectedIds != null && selectedIds.length > 0) {
         for (String id : selectedIds) {
-            // Only accept IDs that exist in cart AND have qty > 0
             if (cartItems.containsKey(id) && cartItems.get(id) > 0) {
                 selectedSet.add(id);
             }
@@ -36,22 +27,16 @@
         }
     }
     
-    // If no valid items selected (or all were qty 0), go back to cart
+    // If no valid items selected, redirect back
     if (selectedSet.isEmpty()) {
         response.sendRedirect("Cart.jsp");
         return;
     }
     
-    /*
-     * Store selected items for PlaceOrder.jsp.
-     * PlaceOrder must use this session data (NOT trust URL amount).
-     */
+    // Store selected items in session for PlaceOrder
     session.setAttribute("checkoutItems", selectedSet);
     
-    /*
-     * Compute totals server-side for selected items only.
-     * NOTE: Still hardcoded RM100 per item.
-     */
+    // Calculate order totals for selected items only
     int subtotal = 0;
     int totalItems = 0;
     for (String id : selectedSet) {
@@ -59,10 +44,8 @@
         totalItems += qty;
         subtotal += qty * 100;
     }
-
-    // Current pricing rules
     int shipping = 0;
-    int tax = 10; // fixed tax, not based on amount
+    int tax = 10;
     int total = subtotal + shipping + tax;
 %>
 
@@ -73,14 +56,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yaya Cosmetic - Checkout</title>
     <style>
-        /* Base layout */
         body { 
             margin: 0; 
             font-family: Arial, sans-serif; 
             background-color: #ffffff; 
         }
         
-        /* Header */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -122,7 +103,6 @@
             align-items: center;
         }
 
-        /* Profile dropdown */
         .dropdown {
             position: relative;
             display: inline-block;
@@ -196,7 +176,7 @@
             text-decoration: underline;
         }
         
-        /* Summary rows */
+        /* Summary */
         .summary-row {
             display: flex;
             justify-content: space-between;
@@ -286,7 +266,6 @@
             background-color: #000f45;
         }
         
-        /* Footer */
         footer {
             background-color: #7b0d1e;
             color: white;
@@ -330,7 +309,6 @@
             <a href="History.jsp">History</a>
             <div class="dropdown">
                 <% 
-                    // This only affects the dropdown label; it does NOT protect checkout access
                     String currentUser = (String) session.getAttribute("userEmail"); 
                     if (currentUser == null) { 
                 %>
@@ -359,7 +337,6 @@
             <a href="Cart.jsp" class="back-link">← Back to Cart</a>
             <h1>CHECKOUT</h1>
             
-            <!-- NOTE: No method/action set. JS handles “submit” and redirects by payment option. -->
             <form id="checkoutForm">
                 <div class="section-box">
                     <div class="section-title">1. Address (ENTER FULL ADDRESS)</div>
@@ -380,7 +357,6 @@
                     </div>
                 </div>
                 
-                <!-- Amount is calculated server-side but later passed via URL to BankPayment.jsp -->
                 <input type="hidden" name="amount" value="<%= total %>">
             </form>
         </div>
@@ -404,7 +380,6 @@
                     <span>RM <%= total %></span>
                 </div>
                 
-                <!-- Triggers submit handler below -->
                 <button type="submit" form="checkoutForm" class="place-order-btn">PLACE ORDER</button>
             </div>
         </div>
@@ -432,13 +407,7 @@
     </footer>
 
     <script>
-        /*
-         * Submit handler decides route:
-         * - COD: direct to PlaceOrder.jsp?method=cod
-         * - Online Payment: go to BankPayment.jsp?amount=...
-         *
-         * WARNING: address is NOT stored anywhere. After redirect you lose it unless you save to session.
-         */
+        // Form submission - route based on payment method
         document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
