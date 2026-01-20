@@ -1,17 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%
-    /*
-     * DEMO PROFILE STORAGE:
-     * Admin profile is stored in session as Map<String, String>.
-     * Keys: name, email, phone, password
-     *
-     * Real-world: profile data should come from DB and password must be hashed.
-     */
+    // Store admin profile in session for persistence
     Map<String, String> adminProfile = (Map<String, String>) session.getAttribute("adminProfile");
     
     if (adminProfile == null) {
-        // Seed default admin profile on first load (demo purposes)
         adminProfile = new java.util.LinkedHashMap<>();
         adminProfile.put("name", "Aiya Johan");
         adminProfile.put("email", "aiyaJo@mail.com");
@@ -20,17 +13,12 @@
         session.setAttribute("adminProfile", adminProfile);
     }
     
-    // Extract values for display
     String adminName = adminProfile.get("name");
     String adminEmail = adminProfile.get("email");
     String adminPhone = adminProfile.get("phone");
     String adminPassword = adminProfile.get("password");
     
-    /*
-     * SUCCESS FEEDBACK:
-     * AdminEditProfile.jsp redirects back here with:
-     * ?success=true&updated=name|phone|password
-     */
+    // Check for success message
     String successMsg = request.getParameter("success");
     String updatedField = request.getParameter("updated");
 %>
@@ -42,14 +30,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yaya Cosmetic - Admin Profile</title>
     <style>
-        /* Base layout */
         body { 
             margin: 0; 
             font-family: Arial, sans-serif; 
             background-color: #ffffff; 
         }
         
-        /* Header / navigation */
+        /* Header */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -85,7 +72,7 @@
             font-weight: 600;
         }
 
-        /* Main content wrapper */
+        /* Main Content */
         .profile-container {
             padding: 40px 10%;
             min-height: 60vh;
@@ -102,7 +89,7 @@
             max-width: 800px;
         }
 
-        /* Success message banner */
+        /* Success Message */
         .success-message {
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
@@ -123,7 +110,6 @@
             color: #155724;
         }
 
-        /* Avatar header section */
         .avatar-section {
             display: flex;
             align-items: center;
@@ -158,7 +144,6 @@
             font-size: 14px;
         }
 
-        /* Profile field blocks */
         .profile-field {
             margin-bottom: 25px;
             padding: 20px;
@@ -188,7 +173,6 @@
             font-weight: 500;
         }
 
-        /* Shared button style for edit actions */
         .edit-btn {
             background-color: #001a72;
             color: white;
@@ -206,7 +190,7 @@
             background-color: #000f45;
         }
 
-        /* Password section styling */
+        /* Password field special styling */
         .password-field {
             border-left-color: #001a72;
         }
@@ -254,7 +238,7 @@
             background-color: #5a0a15;
         }
 
-        /* Read-only blocks (email is intentionally locked) */
+        /* Non-editable field */
         .field-readonly {
             opacity: 0.8;
         }
@@ -268,7 +252,6 @@
             text-transform: uppercase;
         }
 
-        /* Logout section */
         .logout-section {
             margin-top: 50px;
             padding-top: 30px;
@@ -321,7 +304,6 @@
             line-height: 1.4;
         }
 
-        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .field-header {
                 flex-direction: column;
@@ -360,7 +342,6 @@
     <div class="profile-container">
         <h1 class="page-title">MY PROFILE</h1>
 
-        <!-- Conditionally show success message after edit redirect -->
         <% if ("true".equals(successMsg)) { %>
             <div class="success-message" id="successMsg">
                 <span><strong>Success!</strong> 
@@ -379,7 +360,6 @@
         <% } %>
 
         <div class="profile-content">
-            <!-- Avatar + role header -->
             <div class="avatar-section">
                 <div class="avatar">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -392,7 +372,7 @@
                 </div>
             </div>
 
-            <!-- Full Name: editable via AdminEditProfile.jsp -->
+            <!-- Full Name - Editable -->
             <div class="profile-field">
                 <div class="field-header">
                     <span class="field-label">Full Name</span>
@@ -401,7 +381,7 @@
                 <div class="field-value"><%= adminName %></div>
             </div>
 
-            <!-- Email: read-only (intentionally locked to avoid changing identity field) -->
+            <!-- Email - Not Editable -->
             <div class="profile-field field-readonly">
                 <div class="field-header">
                     <span class="field-label">Email Address</span>
@@ -410,7 +390,7 @@
                 <div class="field-value"><%= adminEmail %></div>
             </div>
 
-            <!-- Phone: editable via AdminEditProfile.jsp -->
+            <!-- Phone Number - Editable -->
             <div class="profile-field">
                 <div class="field-header">
                     <span class="field-label">Phone Number</span>
@@ -419,14 +399,13 @@
                 <div class="field-value"><%= adminPhone %></div>
             </div>
 
-            <!-- Password: UI toggle + redirect to change password page -->
+            <!-- Password - With Eye Toggle and Change Password -->
             <div class="profile-field password-field">
                 <div class="field-header">
                     <span class="field-label">Password</span>
                     <button class="change-password-btn" onclick="window.location.href='AdminEditProfile.jsp?field=password'">CHANGE PASSWORD</button>
                 </div>
                 <div class="password-value-container">
-                    <!-- Default display is masked; real password is revealed via JS toggle -->
                     <span class="password-value" id="passwordDisplay">••••••••</span>
                     <button class="eye-btn" onclick="togglePassword()" id="eyeBtn" title="Show password">
                         <span id="eyeIcon">👁️</span>
@@ -434,12 +413,8 @@
                 </div>
             </div>
 
-            <!-- Logout: demo redirect to login page after confirmation -->
             <div class="logout-section">
-                <button class="logout-btn"
-                        onclick="if(confirm('Are you sure you want to logout?')) { window.location.href='AdminLogin.jsp'; }">
-                    LOGOUT
-                </button>
+                <button class="logout-btn" onclick="if(confirm('Are you sure you want to logout?')) { window.location.href='AdminLogin.jsp'; }">LOGOUT</button>
             </div>
         </div>
     </div>
@@ -467,14 +442,7 @@
     </footer>
 
     <script>
-        /*
-         * Password eye toggle:
-         * WARNING: This exposes the real password on the client side by embedding it into the HTML/JS.
-         * Real-world: never send stored passwords to the frontend. Use "Change Password" only.
-         */
         var passwordVisible = false;
-
-        // This line injects the password into JS (security leak; acceptable only for a demo)
         var actualPassword = '<%= adminPassword %>';
         
         function togglePassword() {
@@ -495,7 +463,7 @@
             }
         }
 
-        // Auto-hide success message after 5 seconds for cleaner UI
+        // Auto-hide success message after 5 seconds
         setTimeout(function() {
             var msg = document.getElementById('successMsg');
             if (msg) {
