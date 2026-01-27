@@ -1,54 +1,20 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.*, com.yc.model.CartItem, com.yc.model.Address, java.math.BigDecimal" %>
 <%
-    // Get cart items from session
-    Map<String, Integer> cartItems = (Map<String, Integer>) session.getAttribute("cartItems");
-    if (cartItems == null || cartItems.isEmpty()) {
-        response.sendRedirect("Cart.jsp");
+    List<CartItem> cartItems = (List<CartItem>) request.getAttribute("cartItems");
+    BigDecimal cartTotal = (BigDecimal) request.getAttribute("cartTotal");
+    List<Address> addresses = (List<Address>) request.getAttribute("addresses");
+    Address defaultAddress = (Address) request.getAttribute("defaultAddress");
+    Integer cartCount = (Integer) request.getAttribute("cartCount");
+    
+    if (cartItems == null) {
+        response.sendRedirect("CheckoutServlet");
         return;
     }
     
-    // Get selected items from form (POST) or use all items with qty > 0
-    String[] selectedIds = request.getParameterValues("selectedItems");
-    Set<String> selectedSet = new HashSet<>();
-    
-    if (selectedIds != null && selectedIds.length > 0) {
-        for (String id : selectedIds) {
-            if (cartItems.containsKey(id) && cartItems.get(id) > 0) {
-                selectedSet.add(id);
-            }
-        }
-    } else {
-        // Fallback: select all items with qty > 0
-        for (Map.Entry<String, Integer> entry : cartItems.entrySet()) {
-            if (entry.getValue() > 0) {
-                selectedSet.add(entry.getKey());
-            }
-        }
-    }
-    
-    // If no valid items selected, redirect back
-    if (selectedSet.isEmpty()) {
-        response.sendRedirect("Cart.jsp");
-        return;
-    }
-    
-    // Store selected items in session for PlaceOrder
-    session.setAttribute("checkoutItems", selectedSet);
-    
-    // Calculate order totals for selected items only
-    int subtotal = 0;
-    int totalItems = 0;
-    for (String id : selectedSet) {
-        int qty = cartItems.get(id);
-        totalItems += qty;
-        subtotal += qty * 100;
-    }
-    int shipping = 0;
-    int tax = 10;
-    int total = subtotal + shipping + tax;
+    if (cartTotal == null) cartTotal = BigDecimal.ZERO;
+    if (cartCount == null) cartCount = 0;
 %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,243 +22,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yaya Cosmetic - Checkout</title>
     <style>
-        body { 
-            margin: 0; 
-            font-family: Arial, sans-serif; 
-            background-color: #ffffff; 
-        }
-        
-        header {
-            background-color: #7b0d1e;
-            color: white;
-            padding: 10px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #fcfcfc; }
+        header { background-color: #7b0d1e; color: white; padding: 10px 50px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-container { display: flex; align-items: center; gap: 15px; }
+        .logo-img { height: 50px; width: auto; }
+        .brand-name { font-family: 'Times New Roman', serif; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; }
+        nav { display: flex; align-items: center; gap: 25px; }
+        nav a { color: white; text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+        .checkout-section { padding: 40px 60px; min-height: 60vh; }
+        .section-title { font-size: 32px; font-weight: bold; margin: 0 0 30px 0; }
+        .checkout-container { display: flex; gap: 40px; }
+        .checkout-form { flex: 2; }
+        .order-summary { flex: 1; background-color: #f5ebe0; padding: 30px; border-radius: 15px; height: fit-content; }
 
-        .logo-img {
-            height: 50px;
-            width: auto;
-        }
+        .form-section { background: #fff; padding: 25px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .form-section h3 { margin: 0 0 20px 0; font-size: 18px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; }
 
-        .brand-name {
-            font-size: 28px;
-            font-family: 'Times New Roman', serif;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+        .address-option { padding: 15px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; }
+        .address-option:hover { border-color: #7b0d1e; }
+        .address-option.selected { border-color: #7b0d1e; background-color: #fff5f5; }
+        .address-option input { margin-top: 3px; flex-shrink: 0; }
+        .address-option > div { flex: 1; }
+        .address-label { font-weight: bold; }
+        .address-text { font-size: 14px; color: #666; margin-top: 5px; line-height: 1.5; }
 
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        nav {
-            display: flex;
-            align-items: center;
-        }
+        .payment-option { padding: 15px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; }
+        .payment-option:hover { border-color: #7b0d1e; }
+        .payment-option.selected { border-color: #7b0d1e; background-color: #fff5f5; }
 
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #ffffff;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px black;
-            z-index: 1;
-            right: 0;
-            margin-top: 5px;
-        }
-        
-        .dropdown-content a {
-            color: #7b0d1e !important;
-            padding: 12px 16px;
-            display: block;
-            text-align: left;
-            margin: 0;
-            font-size: 13px;
-            text-transform: none;
-            border-bottom: 1px solid;
-        }
-        
-        .dropdown-content a:hover {
-            background-color: #f1f1f1;
-        }
-        
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
-        
-        /* Checkout Layout */
-        .checkout-container {
-            padding: 40px 10%;
-            display: flex;
-            gap: 40px;
-        }
-        
-        .checkout-left {
-            flex: 1;
-        }
-        
-        .checkout-right {
-            flex: 0 0 300px;
-        }
-        
-        .order-summary-box {
-            background-color: #f9f6f2;
-            padding: 25px;
-            border-radius: 10px;
-        }
-        
-        h1 {
-            font-size: 28px;
-            margin-bottom: 30px;
-        }
-        
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #7b0d1e;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        
-        .back-link:hover {
-            text-decoration: underline;
-        }
-        
-        /* Summary */
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 12px 0;
-            font-size: 14px;
-        }
-        
-        .summary-row.total {
-            font-size: 16px;
-            font-weight: bold;
-            padding-top: 15px;
-            border-top: 1px solid #ccc;
-            margin-top: 15px;
-        }
-        
-        /* Section Box */
-        .section-box {
-            background-color: #f9f6f2;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-        
-        /* Address Input */
-        .address-input {
-            width: 100%;
-            min-height: 100px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: Arial, sans-serif;
-            resize: vertical;
-            box-sizing: border-box;
-        }
-        
-        .address-input:focus {
-            outline: none;
-            border-color: #7b0d1e;
-        }
-        
-        .payment-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .payment-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-        }
-        
-        .payment-option input[type="radio"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #7b0d1e;
-        }
-        
-        .payment-label {
-            font-size: 14px;
-        }
-        
-        /* Place Order Button */
-        .place-order-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: #001a72;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            margin-top: 20px;
-        }
-        
-        .place-order-btn:hover {
-            background-color: #000f45;
-        }
-        
-        footer {
-            background-color: #7b0d1e;
-            color: white;
-            padding: 40px 60px;
-            display: flex;
-            justify-content: space-between;
-            margin-top: 40px;
-        }
+        .summary-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #ddd; }
+        .summary-item { display: flex; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .summary-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; }
+        .summary-item-details { flex: 1; }
+        .summary-item-name { font-size: 14px; font-weight: bold; }
+        .summary-item-qty { font-size: 12px; color: #666; }
+        .summary-item-price { font-weight: bold; }
 
-        .footer-col {
-            flex: 1;
-        }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+        .summary-total { display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; margin-top: 15px; padding-top: 15px; border-top: 2px solid #ddd; }
 
-        .footer-col h4 {
-            font-size: 16px;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-        }
+        .btn-place-order { display: block; width: 100%; padding: 15px; background-color: #7b0d1e; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 20px; }
+        .btn-place-order:hover { background-color: #5a0a15; }
 
-        .footer-col p, .footer-col a {
-            display: block;
-            color: #ffffff;
-            text-decoration: none;
-            font-size: 13px;
-            margin: 8px 0;
-            line-height: 1.4;
-        }
+        .no-address { padding: 20px; text-align: center; color: #666; }
+        .no-address a { color: #7b0d1e; }
+
+        footer { background-color: #7b0d1e; color: white; padding: 40px 60px; display: flex; justify-content: space-between; margin-top: 50px; }
+        .footer-col { flex: 1; }
+        .footer-col h4 { font-size: 16px; margin-bottom: 20px; text-transform: uppercase; }
+        .footer-col p, .footer-col a { display: block; color: #ffffff; text-decoration: none; font-size: 13px; margin: 8px 0; }
+
+        @media (max-width: 800px) { .checkout-container { flex-direction: column; } }
     </style>
 </head>
 <body>
@@ -300,90 +81,100 @@
     <header>
         <div class="logo-container">
             <img src="LOGO.png" alt="Yaya Logo" class="logo-img">
-            <div class="brand-name">YAYA COSMETIC</div>
+            <span class="brand-name">Yaya Cosmetic</span>
         </div>
         <nav>
             <a href="HomePage.jsp">Home</a>
-            <a href="Product.jsp">Product</a>
-            <a href="Cart.jsp">Cart</a>
-            <a href="History.jsp">History</a>
-            <div class="dropdown">
-                <% 
-                    String currentUser = (String) session.getAttribute("userEmail"); 
-                    if (currentUser == null) { 
-                %>
-                    <a href="#" class="dropbtn">Profile</a>
-                    <div class="dropdown-content">
-                        <a href="Login.jsp">Login</a>
-                        <a href="Signup.jsp">Sign up</a>
-                    </div>
-                <% 
-                    } else { 
-                %>
-                    <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
-                    <div class="dropdown-content">
-                        <a href="Profile.jsp">View Profile</a>
-                        <a href="Logout.jsp">Logout</a>
-                    </div>
-                <% 
-                    } 
-                %>
-            </div>
+            <a href="ProductListServlet">Products</a>
+            <a href="OrderHistoryServlet">History</a>
+            <a href="ProfileServlet">Profile</a>
+            <a href="LogoutServlet">Logout</a>
         </nav>
     </header>
 
-    <div class="checkout-container">
-        <div class="checkout-left">
-            <a href="Cart.jsp" class="back-link">← Back to Cart</a>
-            <h1>CHECKOUT</h1>
-            
-            <form id="checkoutForm">
-                <div class="section-box">
-                    <div class="section-title">1. Address (ENTER FULL ADDRESS)</div>
-                    <textarea name="address" class="address-input" placeholder="ENTER FULL ADDRESS" required></textarea>
-                </div>
-                
-                <div class="section-box">
-                    <div class="section-title">2. Payment Method</div>
-                    <div class="payment-options">
-                        <label class="payment-option">
-                            <input type="radio" name="paymentMethod" value="card" checked>
-                            <span class="payment-label">Online Payment</span>
+    <section class="checkout-section">
+        <h2 class="section-title">CHECKOUT</h2>
+
+        <form action="PlaceOrderServlet" method="POST">
+            <div class="checkout-container">
+                <div class="checkout-form">
+                    <div class="form-section">
+                        <h3>Shipping Address</h3>
+                        <% if (addresses == null || addresses.isEmpty()) { %>
+                            <div class="no-address">
+                                <p>You don't have any saved addresses.</p>
+                                <a href="ProfileServlet">Add an address in your profile</a>
+                            </div>
+                        <% } else { 
+                            for (Address addr : addresses) { 
+                                boolean isSelected = (defaultAddress != null && addr.getAddressId() == defaultAddress.getAddressId());
+                        %>
+                            <label class="address-option <%= isSelected ? "selected" : "" %>">
+                                <input type="radio" name="addressId" value="<%= addr.getAddressId() %>" <%= isSelected ? "checked" : "" %> required>
+                                <div>
+                                    <div class="address-label"><%= addr.getLabel() != null ? addr.getLabel() : "Address" %></div>
+                                    <div class="address-text">
+                                        <%= addr.getAddressLine() %>, <%= addr.getCity() %>, <%= addr.getState() %> <%= addr.getPostalCode() %>
+                                        <br>Phone: <%= addr.getPhone() %>
+                                    </div>
+                                </div>
+                            </label>
+                        <% } 
+                        } %>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Payment Method</h3>
+                        <label class="payment-option selected">
+                            <input type="radio" name="paymentMethod" value="bank" checked>
+                            <div>
+                                <strong>Online Banking</strong>
+                                <div style="font-size:12px; color:#666;">Pay securely via bank transfer</div>
+                            </div>
                         </label>
                         <label class="payment-option">
                             <input type="radio" name="paymentMethod" value="cod">
-                            <span class="payment-label">Cash On Delivery</span>
+                            <div>
+                                <strong>Cash on Delivery</strong>
+                                <div style="font-size:12px; color:#666;">Pay when you receive your order</div>
+                            </div>
                         </label>
                     </div>
                 </div>
-                
-                <input type="hidden" name="amount" value="<%= total %>">
-            </form>
-        </div>
-        
-        <div class="checkout-right">
-            <div class="order-summary-box">
-                <div class="summary-row">
-                    <span>Subtotal</span>
-                    <span>RM <%= subtotal %></span>
+
+                <div class="order-summary">
+                    <div class="summary-title">Order Summary</div>
+                    <% for (CartItem item : cartItems) { %>
+                        <div class="summary-item">
+                            <img src="<%= item.getProductImage() %>" alt="<%= item.getProductName() %>">
+                            <div class="summary-item-details">
+                                <div class="summary-item-name"><%= item.getProductName() %></div>
+                                <div class="summary-item-qty">Qty: <%= item.getQuantity() %></div>
+                            </div>
+                            <div class="summary-item-price">RM <%= item.getSubtotal() %></div>
+                        </div>
+                    <% } %>
+                    
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span>RM <%= cartTotal %></span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Shipping</span>
+                        <span>FREE</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span>RM <%= cartTotal %></span>
+                    </div>
+
+                    <button type="submit" class="btn-place-order" <%= (addresses == null || addresses.isEmpty()) ? "disabled" : "" %>>
+                        Place Order
+                    </button>
                 </div>
-                <div class="summary-row">
-                    <span>Shipping</span>
-                    <span>FREE</span>
-                </div>
-                <div class="summary-row">
-                    <span>Estimated Tax</span>
-                    <span>RM <%= tax %></span>
-                </div>
-                <div class="summary-row total">
-                    <span>ESTIMATED TOTAL</span>
-                    <span>RM <%= total %></span>
-                </div>
-                
-                <button type="submit" form="checkoutForm" class="place-order-btn">PLACE ORDER</button>
             </div>
-        </div>
-    </div>
+        </form>
+    </section>
 
     <footer>
         <div class="footer-col">
@@ -401,26 +192,25 @@
         <div class="footer-col">
             <h4>CONTACT</h4>
             <p>03-78279388 (OFFICE HOUR)</p>
-            <p>yayacosmetic@hotline.com (official email)</p>
+            <p>yayacosmetic@hotline.com</p>
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
 
     <script>
-        // Form submission - route based on payment method
-        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-            var amount = document.querySelector('input[name="amount"]').value;
-            
-            if (paymentMethod === 'cod') {
-                // COD - go straight to PlaceOrder
-                window.location.href = 'PlaceOrder.jsp?method=cod';
-            } else {
-                // Card/Bank - go to BankPayment
-                window.location.href = 'BankPayment.jsp?amount=' + amount;
-            }
+        document.querySelectorAll('.address-option').forEach(function(el) {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.address-option').forEach(function(e) { e.classList.remove('selected'); });
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
+        });
+        document.querySelectorAll('.payment-option').forEach(function(el) {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.payment-option').forEach(function(e) { e.classList.remove('selected'); });
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
         });
     </script>
 
