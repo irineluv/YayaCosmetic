@@ -1,14 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*, com.yc.model.CartItem, com.yc.model.Address, java.math.BigDecimal" %>
+<%@ page import="java.util.*, com.yc.model.CartItem, java.math.BigDecimal" %>
 <%
     List<CartItem> cartItems = (List<CartItem>) request.getAttribute("cartItems");
     BigDecimal cartTotal = (BigDecimal) request.getAttribute("cartTotal");
-    List<Address> addresses = (List<Address>) request.getAttribute("addresses");
-    Address defaultAddress = (Address) request.getAttribute("defaultAddress");
     Integer cartCount = (Integer) request.getAttribute("cartCount");
     
     if (cartItems == null) {
-        response.sendRedirect("CheckoutServlet");
+        response.sendRedirect("CartServlet");
         return;
     }
     
@@ -20,60 +18,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yaya Cosmetic - Checkout</title>
+    <title>Yaya Cosmetic - Shopping Cart</title>
     <style>
-        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #fcfcfc; }
-        header { background-color: #7b0d1e; color: white; padding: 10px 50px; display: flex; justify-content: space-between; align-items: center; }
-        .logo-container { display: flex; align-items: center; gap: 15px; }
-        .logo-img { height: 50px; width: auto; }
-        .brand-name { font-family: 'Times New Roman', serif; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; }
-        nav { display: flex; align-items: center; gap: 25px; }
-        nav a { color: white; text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; }
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #fcfcfc;
+        }
 
-        .checkout-section { padding: 40px 60px; min-height: 60vh; }
-        .section-title { font-size: 32px; font-weight: bold; margin: 0 0 30px 0; }
-        .checkout-container { display: flex; gap: 40px; }
-        .checkout-form { flex: 2; }
-        .order-summary { flex: 1; background-color: #f5ebe0; padding: 30px; border-radius: 15px; height: fit-content; }
+        header {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 10px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-        .form-section { background: #fff; padding: 25px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .form-section h3 { margin: 0 0 20px 0; font-size: 18px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
 
-        .address-option { padding: 15px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; }
-        .address-option:hover { border-color: #7b0d1e; }
-        .address-option.selected { border-color: #7b0d1e; background-color: #fff5f5; }
-        .address-option input { margin-top: 3px; flex-shrink: 0; }
-        .address-option > div { flex: 1; }
-        .address-label { font-weight: bold; }
-        .address-text { font-size: 14px; color: #666; margin-top: 5px; line-height: 1.5; }
+        .logo-img {
+            height: 50px;
+            width: auto;
+        }
 
-        .payment-option { padding: 15px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; }
-        .payment-option:hover { border-color: #7b0d1e; }
-        .payment-option.selected { border-color: #7b0d1e; background-color: #fff5f5; }
+        .brand-name {
+            font-family: 'Times New Roman', serif;
+            font-size: 26px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
 
-        .summary-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #ddd; }
-        .summary-item { display: flex; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-        .summary-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; }
-        .summary-item-details { flex: 1; }
-        .summary-item-name { font-size: 14px; font-weight: bold; }
-        .summary-item-qty { font-size: 12px; color: #666; }
-        .summary-item-price { font-weight: bold; }
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
 
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
-        .summary-total { display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; margin-top: 15px; padding-top: 15px; border-top: 2px solid #ddd; }
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
 
-        .btn-place-order { display: block; width: 100%; padding: 15px; background-color: #7b0d1e; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 20px; }
-        .btn-place-order:hover { background-color: #5a0a15; }
+        .cart-section {
+            padding: 40px 60px;
+            min-height: 60vh;
+        }
 
-        .no-address { padding: 20px; text-align: center; color: #666; }
-        .no-address a { color: #7b0d1e; }
+        .section-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0 0 30px 0;
+        }
 
-        footer { background-color: #7b0d1e; color: white; padding: 40px 60px; display: flex; justify-content: space-between; margin-top: 50px; }
-        .footer-col { flex: 1; }
-        .footer-col h4 { font-size: 16px; margin-bottom: 20px; text-transform: uppercase; }
-        .footer-col p, .footer-col a { display: block; color: #ffffff; text-decoration: none; font-size: 13px; margin: 8px 0; }
+        .cart-container {
+            display: flex;
+            gap: 40px;
+        }
 
-        @media (max-width: 800px) { .checkout-container { flex-direction: column; } }
+        .cart-items {
+            flex: 2;
+        }
+
+        .cart-summary {
+            flex: 1;
+            background-color: #f5ebe0;
+            padding: 30px;
+            border-radius: 15px;
+            height: fit-content;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .cart-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-details h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        .item-details .price {
+            color: #7b0d1e;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .item-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity-control button {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .quantity-control span {
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .btn-remove {
+            color: #dc3545;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .item-subtotal {
+            text-align: right;
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .summary-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+        }
+
+        .btn-checkout {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #7b0d1e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 20px;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-checkout:hover {
+            background-color: #5a0a15;
+        }
+
+        .btn-continue {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #7b0d1e;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .empty-cart h3 {
+            color: #666;
+        }
+
+        .empty-cart a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background-color: #7b0d1e;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        footer {
+            background-color: #7b0d1e;
+            color: white;
+            padding: 40px 60px;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+        }
+
+        .footer-col {
+            flex: 1;
+        }
+
+        .footer-col h4 {
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .footer-col p, .footer-col a {
+            display: block;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 13px;
+            margin: 8px 0;
+        }
+
+        @media (max-width: 800px) {
+            .cart-container {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -92,71 +295,59 @@
         </nav>
     </header>
 
-    <section class="checkout-section">
-        <h2 class="section-title">CHECKOUT</h2>
+    <section class="cart-section">
+        <h2 class="section-title">SHOPPING CART</h2>
 
-        <form action="PlaceOrderServlet" method="POST">
-            <div class="checkout-container">
-                <div class="checkout-form">
-                    <div class="form-section">
-                        <h3>Shipping Address</h3>
-                        <% if (addresses == null || addresses.isEmpty()) { %>
-                            <div class="no-address">
-                                <p>You don't have any saved addresses.</p>
-                                <a href="ProfileServlet">Add an address in your profile</a>
-                            </div>
-                        <% } else { 
-                            for (Address addr : addresses) { 
-                                boolean isSelected = (defaultAddress != null && addr.getAddressId() == defaultAddress.getAddressId());
-                        %>
-                            <label class="address-option <%= isSelected ? "selected" : "" %>">
-                                <input type="radio" name="addressId" value="<%= addr.getAddressId() %>" <%= isSelected ? "checked" : "" %> required>
-                                <div>
-                                    <div class="address-label"><%= addr.getLabel() != null ? addr.getLabel() : "Address" %></div>
-                                    <div class="address-text">
-                                        <%= addr.getAddressLine() %>, <%= addr.getCity() %>, <%= addr.getState() %> <%= addr.getPostalCode() %>
-                                        <br>Phone: <%= addr.getPhone() %>
-                                    </div>
-                                </div>
-                            </label>
-                        <% } 
-                        } %>
-                    </div>
-
-                    <div class="form-section">
-                        <h3>Payment Method</h3>
-                        <label class="payment-option selected">
-                            <input type="radio" name="paymentMethod" value="bank" checked>
-                            <div>
-                                <strong>Online Banking</strong>
-                                <div style="font-size:12px; color:#666;">Pay securely via bank transfer</div>
-                            </div>
-                        </label>
-                        <label class="payment-option">
-                            <input type="radio" name="paymentMethod" value="cod">
-                            <div>
-                                <strong>Cash on Delivery</strong>
-                                <div style="font-size:12px; color:#666;">Pay when you receive your order</div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="order-summary">
-                    <div class="summary-title">Order Summary</div>
+        <% if (cartItems.isEmpty()) { %>
+            <div class="empty-cart">
+                <h3>Your cart is empty</h3>
+                <p>Looks like you haven't added any products yet.</p>
+                <a href="ProductListServlet">Continue Shopping</a>
+            </div>
+        <% } else { %>
+            <div class="cart-container">
+                <div class="cart-items">
                     <% for (CartItem item : cartItems) { %>
-                        <div class="summary-item">
-                            <img src="<%= item.getProductImage() %>" alt="<%= item.getProductName() %>">
-                            <div class="summary-item-details">
-                                <div class="summary-item-name"><%= item.getProductName() %></div>
-                                <div class="summary-item-qty">Qty: <%= item.getQuantity() %></div>
+                        <div class="cart-item">
+                            <img src="<%= item.getProductImage() != null ? item.getProductImage() : "pic product/3.png" %>" 
+                                 alt="<%= item.getProductName() %>">
+                            <div class="item-details">
+                                <h3><%= item.getProductName() %></h3>
+                                <div class="price">RM <%= item.getProductPrice() %></div>
+                                <div class="item-actions">
+                                    <div class="quantity-control">
+                                        <form action="CartServlet" method="POST" style="display:inline;">
+                                            <input type="hidden" name="action" value="update">
+                                            <input type="hidden" name="cartItemId" value="<%= item.getCartItemId() %>">
+                                            <input type="hidden" name="quantity" value="<%= item.getQuantity() - 1 %>">
+                                            <button type="submit">-</button>
+                                        </form>
+                                        <span><%= item.getQuantity() %></span>
+                                        <form action="CartServlet" method="POST" style="display:inline;">
+                                            <input type="hidden" name="action" value="update">
+                                            <input type="hidden" name="cartItemId" value="<%= item.getCartItemId() %>">
+                                            <input type="hidden" name="quantity" value="<%= item.getQuantity() + 1 %>">
+                                            <button type="submit">+</button>
+                                        </form>
+                                    </div>
+                                    <form action="CartServlet" method="POST" style="display:inline;">
+                                        <input type="hidden" name="action" value="remove">
+                                        <input type="hidden" name="cartItemId" value="<%= item.getCartItemId() %>">
+                                        <button type="submit" class="btn-remove">Remove</button>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="summary-item-price">RM <%= item.getSubtotal() %></div>
+                            <div class="item-subtotal">
+                                RM <%= item.getSubtotal() %>
+                            </div>
                         </div>
                     <% } %>
-                    
+                </div>
+
+                <div class="cart-summary">
+                    <div class="summary-title">Order Summary</div>
                     <div class="summary-row">
-                        <span>Subtotal</span>
+                        <span>Items (<%= cartCount %>)</span>
                         <span>RM <%= cartTotal %></span>
                     </div>
                     <div class="summary-row">
@@ -167,13 +358,11 @@
                         <span>Total</span>
                         <span>RM <%= cartTotal %></span>
                     </div>
-
-                    <button type="submit" class="btn-place-order" <%= (addresses == null || addresses.isEmpty()) ? "disabled" : "" %>>
-                        Place Order
-                    </button>
+                    <a href="CheckoutServlet" class="btn-checkout">Proceed to Checkout</a>
+                    <a href="ProductListServlet" class="btn-continue">Continue Shopping</a>
                 </div>
             </div>
-        </form>
+        <% } %>
     </section>
 
     <footer>
@@ -196,23 +385,6 @@
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
-
-    <script>
-        document.querySelectorAll('.address-option').forEach(function(el) {
-            el.addEventListener('click', function() {
-                document.querySelectorAll('.address-option').forEach(function(e) { e.classList.remove('selected'); });
-                this.classList.add('selected');
-                this.querySelector('input').checked = true;
-            });
-        });
-        document.querySelectorAll('.payment-option').forEach(function(el) {
-            el.addEventListener('click', function() {
-                document.querySelectorAll('.payment-option').forEach(function(e) { e.classList.remove('selected'); });
-                this.classList.add('selected');
-                this.querySelector('input').checked = true;
-            });
-        });
-    </script>
 
 </body>
 </html>
