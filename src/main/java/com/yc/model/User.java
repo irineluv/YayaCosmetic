@@ -12,6 +12,9 @@ public class User {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
+    // Additional field for admin view
+    private int orderCount;
+
     public User() {}
 
     public User(int userId, String email, String password, String fullName, String phone) {
@@ -23,6 +26,7 @@ public class User {
         this.role = "customer";
     }
 
+    // Getters and Setters
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
 
@@ -40,5 +44,15 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public Timestamp getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public Timestamp getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+
+    public int getOrderCount() { return orderCount; }
+    public void setOrderCount(int orderCount) { this.orderCount = orderCount; }
+   
 }
 
