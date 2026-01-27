@@ -1,40 +1,23 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.*, com.yc.model.Order, java.text.SimpleDateFormat" %>
 <%
-    // Store orders in session so status changes persist
-    Map<String, String[]> ordersData = (Map<String, String[]>) session.getAttribute("adminOrders");
+    List<Order> orders = (List<Order>) request.getAttribute("orders");
+    String currentFilter = (String) request.getAttribute("currentFilter");
+    Integer pendingCount = (Integer) request.getAttribute("pendingCount");
+    Integer processingCount = (Integer) request.getAttribute("processingCount");
+    Integer shippedCount = (Integer) request.getAttribute("shippedCount");
+    Integer deliveredCount = (Integer) request.getAttribute("deliveredCount");
+    Integer cancelledCount = (Integer) request.getAttribute("cancelledCount");
     
-    if (ordersData == null) {
-        // Initialize with sample data: id -> [name, product, date, address, subtotal, status]
-        ordersData = new LinkedHashMap<>();
-        ordersData.put("01", new String[]{"ALYA MASARAH", "YAYA GOLD PALETTE", "21/05/2024", "Mount Height, Bukit Benar, Selangor", "RM 100", "DELIVERED"});
-        ordersData.put("02", new String[]{"ANIS ZIRA", "YAYA WHITE PALETTE", "21/05/2024", "Bukit Kumbang, Selayang, Selangor", "RM 100", "DELIVERED"});
-        ordersData.put("03", new String[]{"VERONICA MALIS", "YAYA GREEN PALETTE", "08/05/2025", "Jalan Timur Tengah, Pagoh, Perak", "RM 100", "SHIPPED"});
-        ordersData.put("04", new String[]{"MONDY MONA", "YAYA BLUE PALETTE", "08/05/2025", "Jalan Bulan Terang, Klang, Selangor", "RM 100", "PROCESSING"});
-        ordersData.put("05", new String[]{"SARAH AHMAD", "YAYA PINK PALETTE", "10/05/2025", "Taman Melati, Gombak, Selangor", "RM 200", "PENDING"});
-        session.setAttribute("adminOrders", ordersData);
+    String success = request.getParameter("success");
+    String error = request.getParameter("error");
+    
+    if (orders == null) {
+        response.sendRedirect("AdminOrderServlet");
+        return;
     }
     
-    // Handle status update
-    String updateId = request.getParameter("updateId");
-    String newStatus = request.getParameter("newStatus");
-    String successMessage = null;
-    
-    if (updateId != null && newStatus != null && ordersData.containsKey(updateId)) {
-        String[] orderData = ordersData.get(updateId);
-        String oldStatus = orderData[5];
-        orderData[5] = newStatus;
-        ordersData.put(updateId, orderData);
-        session.setAttribute("adminOrders", ordersData);
-        successMessage = "Order #" + updateId + " status updated from " + oldStatus + " to " + newStatus;
-    }
-    
-    // Status options for dropdown
-    String[] statusOptions = {"PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"};
-    
-    // Get filter parameter
-    String filterStatus = request.getParameter("filter");
-    if (filterStatus == null) filterStatus = "ALL";
+    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 %>
 
 <!DOCTYPE html>
@@ -50,7 +33,6 @@
             background-color: #ffffff; 
         }
         
-        /* Header */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -86,7 +68,6 @@
             font-weight: 600;
         }
 
-        /* Main Content */
         .order-container {
             padding: 40px 5%;
             min-height: 60vh;
@@ -96,9 +77,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
+            margin-bottom: 30px;
         }
 
         .page-title {
@@ -107,73 +86,60 @@
             margin: 0;
         }
 
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .filter-section {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .filter-section label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .filter-dropdown {
-            padding: 10px 15px;
-            border: 2px solid #ddd;
+        .message {
+            padding: 15px 20px;
             border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            min-width: 150px;
+            margin-bottom: 20px;
         }
 
-        .filter-dropdown:focus {
-            outline: none;
-            border-color: #7b0d1e;
-        }
-
-        .order-stats {
-            display: flex;
-            gap: 15px;
-        }
-
-        .stat-badge {
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        /* Success Message */
         .success-message {
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        }
+
+        .filter-tabs {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
         }
 
-        .success-message .close-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
+        .filter-tab {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            background: white;
             cursor: pointer;
-            color: #155724;
+            font-size: 13px;
+            font-weight: bold;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s;
         }
 
-        /* Table */
+        .filter-tab:hover {
+            border-color: #7b0d1e;
+        }
+
+        .filter-tab.active {
+            background-color: #7b0d1e;
+            border-color: #7b0d1e;
+            color: white;
+        }
+
+        .filter-tab .count {
+            background-color: #e0e0e0;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        .filter-tab.active .count {
+            background-color: rgba(255,255,255,0.3);
+        }
+
         .table-wrapper {
             overflow-x: auto;
             background-color: #fff;
@@ -201,16 +167,11 @@
         .order-table th {
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 13px;
-            letter-spacing: 0.5px;
+            font-size: 12px;
         }
 
         .order-table tbody tr:hover {
             background-color: #f8f9fa;
-        }
-
-        .order-table td {
-            font-size: 14px;
         }
 
         .order-id {
@@ -218,127 +179,50 @@
             color: #7b0d1e;
         }
 
-        .customer-name {
-            font-weight: 600;
-        }
-
-        .address-cell {
-            max-width: 200px;
-            font-size: 13px;
-            color: #666;
-        }
-
-        /* Status Dropdown Styling */
-        .status-cell {
-            min-width: 180px;
-        }
-
-        .status-dropdown-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-dropdown {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 2px solid #ddd;
-            font-size: 12px;
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
             font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background-color: #FFF3CD; color: #856404; }
+        .status-processing { background-color: #CCE5FF; color: #004085; }
+        .status-shipped { background-color: #E2D5F1; color: #4A2C7A; }
+        .status-delivered { background-color: #D4EDDA; color: #155724; }
+        .status-cancelled { background-color: #F8D7DA; color: #721C24; }
+
+        .status-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 12px;
             cursor: pointer;
-            min-width: 130px;
-            transition: all 0.3s;
         }
 
-        .status-dropdown:focus {
-            outline: none;
-            border-color: #7b0d1e;
-        }
-
-        /* Status-specific dropdown colors */
-        .status-dropdown.status-pending {
-            background-color: #fff3cd;
-            border-color: #ffc107;
-            color: #856404;
-        }
-
-        .status-dropdown.status-processing {
-            background-color: #cce5ff;
-            border-color: #007bff;
-            color: #004085;
-        }
-
-        .status-dropdown.status-shipped {
-            background-color: #e2d5f1;
-            border-color: #6f42c1;
-            color: #4a2c7a;
-        }
-
-        .status-dropdown.status-delivered {
-            background-color: #d4edda;
-            border-color: #28a745;
-            color: #155724;
-        }
-
-        .status-dropdown.status-cancelled {
-            background-color: #f8d7da;
-            border-color: #dc3545;
-            color: #721c24;
-        }
-
-        /* Update Button */
-        .update-btn {
+        .btn-update {
             padding: 8px 15px;
             background-color: #001a72;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 5px;
             font-size: 11px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
         }
 
-        .update-btn:hover {
+        .btn-update:hover {
             background-color: #000f45;
-            transform: translateY(-1px);
         }
 
-        .update-btn:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-            transform: none;
+        .no-orders {
+            text-align: center;
+            padding: 60px;
+            color: #666;
         }
 
-        /* Status Legend */
-        .status-legend {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-        }
-
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .legend-dot.pending { background-color: #ffc107; }
-        .legend-dot.processing { background-color: #007bff; }
-        .legend-dot.shipped { background-color: #6f42c1; }
-        .legend-dot.delivered { background-color: #28a745; }
-        .legend-dot.cancelled { background-color: #dc3545; }
-
-        /* Footer */
         footer {
             background-color: #7b0d1e;
             color: white;
@@ -364,34 +248,6 @@
             text-decoration: none;
             font-size: 13px;
             margin: 8px 0;
-            line-height: 1.4;
-        }
-
-        @media (max-width: 768px) {
-            .order-table {
-                font-size: 12px;
-            }
-            
-            .order-table th,
-            .order-table td {
-                padding: 10px 8px;
-            }
-
-            .status-dropdown {
-                min-width: 100px;
-                padding: 6px 8px;
-            }
-
-            .update-btn {
-                padding: 6px 10px;
-                font-size: 10px;
-            }
-
-            .page-header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
-            }
         }
     </style>
 </head>
@@ -403,109 +259,102 @@
             <div class="brand-name">Yaya Cosmetic</div>
         </div>
         <nav>
-            <a href="AdminHome.jsp">HOME</a>
-            <a href="AdminProduct.jsp">PRODUCT</a>
-            <a href="AdminOrder.jsp">ORDER</a>
-            <a href="AdminMember.jsp">MEMBER</a>
-            <a href="AdminProfile.jsp">PROFILE</a>
+            <a href="AdminDashboardServlet">HOME</a>
+            <a href="AdminProductServlet">PRODUCT</a>
+            <a href="AdminOrderServlet">ORDER</a>
+            <a href="AdminMemberServlet">MEMBER</a>
+            <a href="AdminProfileServlet">PROFILE</a>
         </nav>
     </header>
 
     <div class="order-container">
         <div class="page-header">
             <h1 class="page-title">ORDER MANAGEMENT</h1>
-            <div class="header-controls">
-                <div class="filter-section">
-                    <label>Filter by Status:</label>
-                    <select class="filter-dropdown" onchange="filterOrders(this.value)">
-                        <option value="ALL" <%= "ALL".equals(filterStatus) ? "selected" : "" %>>All Orders</option>
-                        <option value="PENDING" <%= "PENDING".equals(filterStatus) ? "selected" : "" %>>Pending</option>
-                        <option value="PROCESSING" <%= "PROCESSING".equals(filterStatus) ? "selected" : "" %>>Processing</option>
-                        <option value="SHIPPED" <%= "SHIPPED".equals(filterStatus) ? "selected" : "" %>>Shipped</option>
-                        <option value="DELIVERED" <%= "DELIVERED".equals(filterStatus) ? "selected" : "" %>>Delivered</option>
-                        <option value="CANCELLED" <%= "CANCELLED".equals(filterStatus) ? "selected" : "" %>>Cancelled</option>
-                    </select>
-                </div>
-                <div class="order-stats">
-                    <span class="stat-badge" style="background-color: #e3f2fd; color: #1565c0;">
-                        Total Orders: <%= ordersData.size() %>
-                    </span>
-                </div>
-            </div>
         </div>
 
-        <% if (successMessage != null) { %>
-            <div class="success-message" id="successMsg">
-                <span><strong>Success!</strong> <%= successMessage %></span>
-                <button class="close-btn" onclick="document.getElementById('successMsg').style.display='none'">&times;</button>
-            </div>
+        <% if ("updated".equals(success)) { %>
+            <div class="message success-message">Order status updated successfully!</div>
         <% } %>
 
-        <!-- Status Legend -->
-        <div class="status-legend">
-            <div class="legend-item"><span class="legend-dot pending"></span> Pending</div>
-            <div class="legend-item"><span class="legend-dot processing"></span> Processing</div>
-            <div class="legend-item"><span class="legend-dot shipped"></span> Shipped</div>
-            <div class="legend-item"><span class="legend-dot delivered"></span> Delivered</div>
-            <div class="legend-item"><span class="legend-dot cancelled"></span> Cancelled</div>
+        <div class="filter-tabs">
+            <a href="AdminOrderServlet" class="filter-tab <%= "all".equals(currentFilter) ? "active" : "" %>">
+                All <span class="count"><%= orders.size() %></span>
+            </a>
+            <a href="AdminOrderServlet?status=pending" class="filter-tab <%= "pending".equals(currentFilter) ? "active" : "" %>">
+                Pending <span class="count"><%= pendingCount %></span>
+            </a>
+            <a href="AdminOrderServlet?status=processing" class="filter-tab <%= "processing".equals(currentFilter) ? "active" : "" %>">
+                Processing <span class="count"><%= processingCount %></span>
+            </a>
+            <a href="AdminOrderServlet?status=shipped" class="filter-tab <%= "shipped".equals(currentFilter) ? "active" : "" %>">
+                Shipped <span class="count"><%= shippedCount %></span>
+            </a>
+            <a href="AdminOrderServlet?status=delivered" class="filter-tab <%= "delivered".equals(currentFilter) ? "active" : "" %>">
+                Delivered <span class="count"><%= deliveredCount %></span>
+            </a>
+            <a href="AdminOrderServlet?status=cancelled" class="filter-tab <%= "cancelled".equals(currentFilter) ? "active" : "" %>">
+                Cancelled <span class="count"><%= cancelledCount %></span>
+            </a>
         </div>
 
-        <div class="table-wrapper">
-            <table class="order-table">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Product</th>
-                        <th>Date</th>
-                        <th>Address</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% 
-                    for (Map.Entry<String, String[]> entry : ordersData.entrySet()) {
-                        String orderId = entry.getKey();
-                        String[] data = entry.getValue();
-                        String name = data[0];
-                        String product = data[1];
-                        String date = data[2];
-                        String address = data[3];
-                        String subtotal = data[4];
-                        String status = data[5];
-                        
-                        // Skip if filter is active and status doesn't match
-                        if (!"ALL".equals(filterStatus) && !filterStatus.equals(status)) {
-                            continue;
-                        }
-                        
-                        String statusClass = "status-" + status.toLowerCase();
-                    %>
+        <% if (orders.isEmpty()) { %>
+            <div class="no-orders">
+                <h2>No Orders Found</h2>
+                <p>There are no orders matching your filter.</p>
+            </div>
+        <% } else { %>
+            <div class="table-wrapper">
+                <table class="order-table">
+                    <thead>
                         <tr>
-                            <td class="order-id">#<%= orderId %></td>
-                            <td class="customer-name"><%= name %></td>
-                            <td><%= product %></td>
-                            <td><%= date %></td>
-                            <td class="address-cell"><%= address %></td>
-                            <td><strong><%= subtotal %></strong></td>
-                            <td class="status-cell">
-                                <form method="GET" action="AdminOrder.jsp" class="status-dropdown-wrapper">
-                                    <input type="hidden" name="updateId" value="<%= orderId %>">
-                                    <select name="newStatus" class="status-dropdown <%= statusClass %>" 
-                                            onchange="this.className='status-dropdown status-' + this.value.toLowerCase(); this.form.querySelector('.update-btn').disabled = (this.value === '<%= status %>');">
-                                        <% for (String opt : statusOptions) { %>
-                                            <option value="<%= opt %>" <%= opt.equals(status) ? "selected" : "" %>><%= opt %></option>
-                                        <% } %>
-                                    </select>
-                                    <button type="submit" class="update-btn" disabled>Update</button>
-                                </form>
-                            </td>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Action</th>
                         </tr>
-                    <% } %>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        <% for (Order order : orders) { 
+                            String statusClass = "status-" + order.getStatus().toLowerCase();
+                        %>
+                            <tr>
+                                <td class="order-id">#<%= order.getOrderId() %></td>
+                                <td>
+                                    <strong><%= order.getCustomerName() %></strong><br>
+                                    <small><%= order.getCustomerEmail() %></small>
+                                </td>
+                                <td><%= order.getOrderDate() != null ? sdf.format(order.getOrderDate()) : "-" %></td>
+                                <td><strong>RM <%= order.getTotalAmount() %></strong></td>
+                                <td>
+                                    <%= order.getPaymentMethod() %><br>
+                                    <small>(<%= order.getPaymentStatus() %>)</small>
+                                </td>
+                                <td>
+                                    <span class="status-badge <%= statusClass %>"><%= order.getStatus() %></span>
+                                </td>
+                                <td>
+                                    <form action="UpdateOrderStatusServlet" method="POST" style="display:flex; gap:5px;">
+                                        <input type="hidden" name="orderId" value="<%= order.getOrderId() %>">
+                                        <input type="hidden" name="currentFilter" value="<%= currentFilter %>">
+                                        <select name="status" class="status-select">
+                                            <option value="pending" <%= "pending".equals(order.getStatus()) ? "selected" : "" %>>Pending</option>
+                                            <option value="processing" <%= "processing".equals(order.getStatus()) ? "selected" : "" %>>Processing</option>
+                                            <option value="shipped" <%= "shipped".equals(order.getStatus()) ? "selected" : "" %>>Shipped</option>
+                                            <option value="delivered" <%= "delivered".equals(order.getStatus()) ? "selected" : "" %>>Delivered</option>
+                                            <option value="cancelled" <%= "cancelled".equals(order.getStatus()) ? "selected" : "" %>>Cancelled</option>
+                                        </select>
+                                        <button type="submit" class="btn-update">Update</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
     </div>
 
     <footer>
@@ -513,7 +362,6 @@
             <h4>ABOUT YAYA</h4>
             <a href="#">HISTORY</a>
             <a href="#">WORK IN YAYA</a>
-            <a href="#">BELABOUR</a>
         </div>
         <div class="footer-col">
             <h4>ADDRESS</h4>
@@ -525,27 +373,20 @@
         <div class="footer-col">
             <h4>CONTACT</h4>
             <p>03-78279388 (OFFICE HOUR)</p>
-            <p>yayacosmetic@hotline.com (official email)</p>
+            <p>yayacosmetic@hotline.com</p>
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
 
     <script>
-        // Auto-hide success message after 5 seconds
-        // Auto-hide success message after 5 seconds
         setTimeout(function() {
-            var msg = document.getElementById('successMsg');
-            if (msg) {
+            var messages = document.querySelectorAll('.message');
+            messages.forEach(function(msg) {
                 msg.style.transition = 'opacity 0.5s';
                 msg.style.opacity = '0';
                 setTimeout(function() { msg.style.display = 'none'; }, 500);
-            }
+            });
         }, 5000);
-        
-        // Filter orders by status
-        function filterOrders(status) {
-            window.location.href = 'AdminOrder.jsp?filter=' + status;
-        }
     </script>
 
 </body>
