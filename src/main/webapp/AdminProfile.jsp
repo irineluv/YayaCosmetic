@@ -1,26 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*" %>
+<%@ page import="com.yc.model.Admin" %>
 <%
-    // Store admin profile in session for persistence
-    Map<String, String> adminProfile = (Map<String, String>) session.getAttribute("adminProfile");
+    Admin admin = (Admin) request.getAttribute("admin");
+    String success = request.getParameter("success");
+    String updated = request.getParameter("updated");
     
-    if (adminProfile == null) {
-        adminProfile = new java.util.LinkedHashMap<>();
-        adminProfile.put("name", "Aiya Johan");
-        adminProfile.put("email", "aiyaJo@mail.com");
-        adminProfile.put("phone", "012-3456789");
-        adminProfile.put("password", "admin123");
-        session.setAttribute("adminProfile", adminProfile);
+    if (admin == null) {
+        response.sendRedirect("AdminProfileServlet");
+        return;
     }
-    
-    String adminName = adminProfile.get("name");
-    String adminEmail = adminProfile.get("email");
-    String adminPhone = adminProfile.get("phone");
-    String adminPassword = adminProfile.get("password");
-    
-    // Check for success message
-    String successMsg = request.getParameter("success");
-    String updatedField = request.getParameter("updated");
 %>
 
 <!DOCTYPE html>
@@ -36,7 +24,6 @@
             background-color: #ffffff; 
         }
         
-        /* Header */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -72,7 +59,6 @@
             font-weight: 600;
         }
 
-        /* Main Content */
         .profile-container {
             padding: 40px 10%;
             min-height: 60vh;
@@ -82,14 +68,12 @@
             font-size: 36px;
             font-weight: bold;
             margin: 0 0 40px 0;
-            color: #000;
         }
 
         .profile-content {
             max-width: 800px;
         }
 
-        /* Success Message */
         .success-message {
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
@@ -164,7 +148,6 @@
             font-weight: bold;
             color: #888;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .field-value {
@@ -183,42 +166,20 @@
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
-            transition: background-color 0.3s;
         }
 
         .edit-btn:hover {
             background-color: #000f45;
         }
 
-        /* Password field special styling */
         .password-field {
             border-left-color: #001a72;
-        }
-
-        .password-value-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .password-value {
             font-size: 18px;
             color: #333;
-            font-weight: 500;
             letter-spacing: 3px;
-        }
-
-        .eye-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
-            font-size: 18px;
-            color: #666;
-        }
-
-        .eye-btn:hover {
-            color: #333;
         }
 
         .change-password-btn {
@@ -231,14 +192,12 @@
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
-            transition: background-color 0.3s;
         }
 
         .change-password-btn:hover {
             background-color: #5a0a15;
         }
 
-        /* Non-editable field */
         .field-readonly {
             opacity: 0.8;
         }
@@ -268,14 +227,12 @@
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
-            transition: background-color 0.3s;
         }
 
         .logout-btn:hover {
             background-color: #c82333;
         }
 
-        /* Footer */
         footer {
             background-color: #7b0d1e;
             color: white;
@@ -301,25 +258,6 @@
             text-decoration: none;
             font-size: 13px;
             margin: 8px 0;
-            line-height: 1.4;
-        }
-
-        @media (max-width: 768px) {
-            .field-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .avatar-section {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .avatar {
-                margin-right: 0;
-                margin-bottom: 15px;
-            }
         }
     </style>
 </head>
@@ -331,25 +269,25 @@
             <div class="brand-name">Yaya Cosmetic</div>
         </div>
         <nav>
-            <a href="AdminHome.jsp">HOME</a>
-            <a href="AdminProduct.jsp">PRODUCT</a>
-            <a href="AdminOrder.jsp">ORDER</a>
-            <a href="AdminMember.jsp">MEMBER</a>
-            <a href="AdminProfile.jsp">PROFILE</a>
+            <a href="AdminDashboardServlet">HOME</a>
+            <a href="AdminProductServlet">PRODUCT</a>
+            <a href="AdminOrderServlet">ORDER</a>
+            <a href="AdminMemberServlet">MEMBER</a>
+            <a href="AdminProfileServlet">PROFILE</a>
         </nav>
     </header>
 
     <div class="profile-container">
         <h1 class="page-title">MY PROFILE</h1>
 
-        <% if ("true".equals(successMsg)) { %>
+        <% if ("true".equals(success)) { %>
             <div class="success-message" id="successMsg">
                 <span><strong>Success!</strong> 
-                    <% if ("name".equals(updatedField)) { %>
+                    <% if ("name".equals(updated)) { %>
                         Your name has been updated.
-                    <% } else if ("phone".equals(updatedField)) { %>
+                    <% } else if ("phone".equals(updated)) { %>
                         Your phone number has been updated.
-                    <% } else if ("password".equals(updatedField)) { %>
+                    <% } else if ("password".equals(updated)) { %>
                         Your password has been changed successfully.
                     <% } else { %>
                         Profile updated successfully.
@@ -367,54 +305,45 @@
                     </svg>
                 </div>
                 <div class="avatar-info">
-                    <h2><%= adminName %></h2>
+                    <h2><%= admin.getFullName() %></h2>
                     <p>Administrator</p>
                 </div>
             </div>
 
-            <!-- Full Name - Editable -->
             <div class="profile-field">
                 <div class="field-header">
                     <span class="field-label">Full Name</span>
-                    <button class="edit-btn" onclick="window.location.href='AdminEditProfile.jsp?field=name'">EDIT</button>
+                    <button class="edit-btn" onclick="window.location.href='UpdateAdminProfileServlet?field=name'">EDIT</button>
                 </div>
-                <div class="field-value"><%= adminName %></div>
+                <div class="field-value"><%= admin.getFullName() %></div>
             </div>
 
-            <!-- Email - Not Editable -->
             <div class="profile-field field-readonly">
                 <div class="field-header">
                     <span class="field-label">Email Address</span>
                     <span class="readonly-badge">Cannot be changed</span>
                 </div>
-                <div class="field-value"><%= adminEmail %></div>
+                <div class="field-value"><%= admin.getEmail() %></div>
             </div>
 
-            <!-- Phone Number - Editable -->
             <div class="profile-field">
                 <div class="field-header">
                     <span class="field-label">Phone Number</span>
-                    <button class="edit-btn" onclick="window.location.href='AdminEditProfile.jsp?field=phone'">EDIT</button>
+                    <button class="edit-btn" onclick="window.location.href='UpdateAdminProfileServlet?field=phone'">EDIT</button>
                 </div>
-                <div class="field-value"><%= adminPhone %></div>
+                <div class="field-value"><%= admin.getPhone() != null ? admin.getPhone() : "-" %></div>
             </div>
 
-            <!-- Password - With Eye Toggle and Change Password -->
             <div class="profile-field password-field">
                 <div class="field-header">
                     <span class="field-label">Password</span>
-                    <button class="change-password-btn" onclick="window.location.href='AdminEditProfile.jsp?field=password'">CHANGE PASSWORD</button>
+                    <button class="change-password-btn" onclick="window.location.href='UpdateAdminProfileServlet?field=password'">CHANGE PASSWORD</button>
                 </div>
-                <div class="password-value-container">
-                    <span class="password-value" id="passwordDisplay">••••••••</span>
-                    <button class="eye-btn" onclick="togglePassword()" id="eyeBtn" title="Show password">
-                        <span id="eyeIcon">👁️</span>
-                    </button>
-                </div>
+                <div class="password-value">********</div>
             </div>
 
             <div class="logout-section">
-                <button class="logout-btn" onclick="if(confirm('Are you sure you want to logout?')) { window.location.href='AdminLogin.jsp'; }">LOGOUT</button>
+                <button class="logout-btn" onclick="if(confirm('Are you sure you want to logout?')) { window.location.href='AdminLogoutServlet'; }">LOGOUT</button>
             </div>
         </div>
     </div>
@@ -424,7 +353,6 @@
             <h4>ABOUT YAYA</h4>
             <a href="#">HISTORY</a>
             <a href="#">WORK IN YAYA</a>
-            <a href="#">BELABOUR</a>
         </div>
         <div class="footer-col">
             <h4>ADDRESS</h4>
@@ -436,34 +364,12 @@
         <div class="footer-col">
             <h4>CONTACT</h4>
             <p>03-78279388 (OFFICE HOUR)</p>
-            <p>yayacosmetic@hotline.com (official email)</p>
+            <p>yayacosmetic@hotline.com</p>
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
 
     <script>
-        var passwordVisible = false;
-        var actualPassword = '<%= adminPassword %>';
-        
-        function togglePassword() {
-            var display = document.getElementById('passwordDisplay');
-            var eyeIcon = document.getElementById('eyeIcon');
-            var eyeBtn = document.getElementById('eyeBtn');
-            
-            if (passwordVisible) {
-                display.textContent = '••••••••';
-                eyeIcon.textContent = '👁️';
-                eyeBtn.title = 'Show password';
-                passwordVisible = false;
-            } else {
-                display.textContent = actualPassword;
-                eyeIcon.textContent = '🙈';
-                eyeBtn.title = 'Hide password';
-                passwordVisible = true;
-            }
-        }
-
-        // Auto-hide success message after 5 seconds
         setTimeout(function() {
             var msg = document.getElementById('successMsg');
             if (msg) {
