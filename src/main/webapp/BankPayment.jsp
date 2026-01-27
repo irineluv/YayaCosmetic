@@ -1,507 +1,159 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*" %>
+<%@ page import="java.math.BigDecimal" %>
 <%
-    // Get order details from session/parameters
-    String totalAmount = request.getParameter("amount");
-    if (totalAmount == null) totalAmount = "110";
+    Integer orderId = (Integer) session.getAttribute("pendingOrderId");
+    BigDecimal orderTotal = (BigDecimal) session.getAttribute("pendingOrderTotal");
     
-    String orderRef = "YC" + System.currentTimeMillis();
+    if (orderId == null || orderTotal == null) {
+        response.sendRedirect("CartServlet");
+        return;
+    }
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MYBank Online Payment Gateway</title>
+    <title>Yaya Cosmetic - Bank Payment</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* Bank Header */
-        .bank-header {
-            background: linear-gradient(90deg, #0d47a1, #1565c0);
-            padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-        
-        .bank-logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .bank-logo-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #ffd700, #ffaa00);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #0d47a1;
-        }
-        
-        .bank-name {
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        
-        .bank-name span {
-            color: #ffd700;
-        }
-        
-        .secure-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255,255,255,0.1);
-            padding: 8px 15px;
-            border-radius: 20px;
-            color: #4caf50;
-            font-size: 12px;
-        }
-        
-        .secure-badge::before {
-            content: "🔒";
-        }
-        
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 20px;
-        }
-        
-        .payment-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 500px;
-            overflow: hidden;
-        }
-        
-        /* Payment Header */
-        .payment-header {
-            background: linear-gradient(135deg, #0d47a1, #1976d2);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .payment-header h2 {
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-        
-        .merchant-info {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .amount-display {
-            margin-top: 20px;
-            padding: 20px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-        
-        .amount-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.8;
-        }
-        
-        .amount-value {
-            font-size: 36px;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        
-        .amount-value::before {
-            content: "RM ";
-            font-size: 20px;
-        }
-        
-        .order-ref {
-            font-size: 11px;
-            margin-top: 10px;
-            opacity: 0.7;
-        }
-        
-        /* Payment Form */
-        .payment-form {
-            padding: 30px;
-        }
-        
-        .form-section {
-            margin-bottom: 25px;
-        }
-        
-        .form-section h3 {
-            font-size: 14px;
-            color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        
-        .bank-options {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .bank-option {
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 15px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .bank-option:hover {
-            border-color: #1976d2;
-            background: #f5f9ff;
-        }
-        
-        .bank-option.selected {
-            border-color: #1976d2;
-            background: #e3f2fd;
-        }
-        
-        .bank-option-icon {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-        
-        .bank-option-name {
-            font-size: 11px;
-            color: #666;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 14px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: border-color 0.3s;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #1976d2;
-        }
-        
-        .form-group input::placeholder {
-            color: #aaa;
-        }
-        
-        .card-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        /* Buttons */
-        .btn-pay {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #0d47a1, #1976d2);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .btn-pay:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(13, 71, 161, 0.4);
-        }
-        
-        .btn-cancel {
-            width: 100%;
-            padding: 14px;
-            background: transparent;
-            color: #666;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: all 0.3s;
-        }
-        
-        .btn-cancel:hover {
-            border-color: #f44336;
-            color: #f44336;
-        }
-        
-        /* Security Notice */
-        .security-notice {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 10px;
-            margin-top: 20px;
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .security-notice::before {
-            content: "🛡️";
-            font-size: 20px;
-        }
-        
-        /* Footer */
-        .bank-footer {
-            background: #1a1a2e;
-            color: #888;
-            padding: 20px;
-            text-align: center;
-            font-size: 11px;
-        }
-        
-        .bank-footer a {
-            color: #64b5f6;
-            text-decoration: none;
-        }
-        
-        /* Demo Notice */
-        .demo-banner {
-            background: #ff9800;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-        
-        /* Loading Overlay */
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 1000;
-        }
-        
-        .loading-overlay.active {
-            display: flex;
-        }
-        
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top-color: #ffd700;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .loading-text {
-            color: white;
-            margin-top: 20px;
-            font-size: 16px;
-        }
+        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #f5f5f5; }
+        header { background-color: #7b0d1e; color: white; padding: 10px 50px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-container { display: flex; align-items: center; gap: 15px; }
+        .logo-img { height: 50px; width: auto; }
+        .brand-name { font-family: 'Times New Roman', serif; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; }
+
+        .payment-section { padding: 60px 20px; min-height: 60vh; display: flex; justify-content: center; align-items: center; }
+        .payment-card { background: white; border-radius: 15px; padding: 40px; max-width: 450px; width: 100%; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .payment-header { text-align: center; margin-bottom: 30px; }
+        .payment-header h2 { margin: 0 0 10px 0; font-size: 24px; }
+        .payment-header p { color: #666; margin: 0; }
+
+        .order-summary { background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .summary-total { display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; padding-top: 15px; border-top: 2px solid #ddd; margin-top: 10px; }
+
+        .bank-options { margin-bottom: 30px; }
+        .bank-option { display: flex; align-items: center; gap: 15px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
+        .bank-option:hover { border-color: #7b0d1e; }
+        .bank-option.selected { border-color: #7b0d1e; background-color: #fff5f5; }
+        .bank-option input { margin: 0; }
+        .bank-name { font-weight: bold; }
+
+        .btn-group { display: flex; gap: 15px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-confirm { background-color: #28a745; color: white; }
+        .btn-confirm:hover { background-color: #218838; }
+        .btn-cancel { background-color: #dc3545; color: white; }
+        .btn-cancel:hover { background-color: #c82333; }
+
+        .secure-badge { text-align: center; margin-top: 20px; color: #666; font-size: 13px; }
+        .secure-badge span { color: #28a745; }
+
+        footer { background-color: #7b0d1e; color: white; padding: 40px 60px; display: flex; justify-content: space-between; }
+        .footer-col { flex: 1; }
+        .footer-col h4 { font-size: 16px; margin-bottom: 20px; text-transform: uppercase; }
+        .footer-col p, .footer-col a { display: block; color: #ffffff; text-decoration: none; font-size: 13px; margin: 8px 0; }
     </style>
 </head>
 <body>
 
-    <div class="demo-banner">
-        ⚠️ DEMO MODE - This is a simulated payment gateway for testing purposes only
-    </div>
-
-    <header class="bank-header">
-        <div class="bank-logo">
-            <div class="bank-logo-icon">MB</div>
-            <div class="bank-name">MY<span>Bank</span> Online</div>
-        </div>
-        <div class="secure-badge">
-            256-bit SSL Encrypted
+    <header>
+        <div class="logo-container">
+            <img src="LOGO.png" alt="Yaya Logo" class="logo-img">
+            <span class="brand-name">Yaya Cosmetic</span>
         </div>
     </header>
 
-    <main class="main-content">
-        <div class="payment-container">
+    <section class="payment-section">
+        <div class="payment-card">
             <div class="payment-header">
-                <h2>Payment to Merchant</h2>
-                <div class="merchant-info">YAYA COSMETIC SDN BHD</div>
-                <div class="amount-display">
-                    <div class="amount-label">Total Amount</div>
-                    <div class="amount-value"><%= totalAmount %></div>
-                    <div class="order-ref">Order Reference: <%= orderRef %></div>
+                <h2>Online Banking Payment</h2>
+                <p>Complete your payment securely</p>
+            </div>
+
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>Order #</span>
+                    <span><%= orderId %></span>
+                </div>
+                <div class="summary-total">
+                    <span>Total Amount</span>
+                    <span>RM <%= orderTotal %></span>
                 </div>
             </div>
 
-            <form class="payment-form" onsubmit="processPayment(event)">
-                <div class="form-section">
-                    <h3>Select Your Bank</h3>
-                    <div class="bank-options">
-                        <div class="bank-option selected" onclick="selectBank(this)">
-                            <div class="bank-option-icon">🏦</div>
-                            <div class="bank-option-name">MYBank</div>
-                        </div>
-                        <div class="bank-option" onclick="selectBank(this)">
-                            <div class="bank-option-icon">🏛️</div>
-                            <div class="bank-option-name">CIMB</div>
-                        </div>
-                        <div class="bank-option" onclick="selectBank(this)">
-                            <div class="bank-option-icon">💳</div>
-                            <div class="bank-option-name">Maybank</div>
-                        </div>
-                        <div class="bank-option" onclick="selectBank(this)">
-                            <div class="bank-option-icon">🏢</div>
-                            <div class="bank-option-name">RHB</div>
-                        </div>
-                        <div class="bank-option" onclick="selectBank(this)">
-                            <div class="bank-option-icon">🏪</div>
-                            <div class="bank-option-name">Public Bank</div>
-                        </div>
-                        <div class="bank-option" onclick="selectBank(this)">
-                            <div class="bank-option-icon">🏬</div>
-                            <div class="bank-option-name">Hong Leong</div>
-                        </div>
+            <div class="bank-options">
+                <label class="bank-option selected">
+                    <input type="radio" name="bank" value="maybank" checked>
+                    <div>
+                        <div class="bank-name">Maybank2u</div>
                     </div>
-                </div>
+                </label>
+                <label class="bank-option">
+                    <input type="radio" name="bank" value="cimb">
+                    <div>
+                        <div class="bank-name">CIMB Clicks</div>
+                    </div>
+                </label>
+                <label class="bank-option">
+                    <input type="radio" name="bank" value="rhb">
+                    <div>
+                        <div class="bank-name">RHB Now</div>
+                    </div>
+                </label>
+                <label class="bank-option">
+                    <input type="radio" name="bank" value="publicbank">
+                    <div>
+                        <div class="bank-name">Public Bank</div>
+                    </div>
+                </label>
+            </div>
 
-                <div class="form-section">
-                    <h3>Card Details</h3>
-                    <div class="form-group">
-                        <label>Card Number</label>
-                        <input type="text" placeholder="1234 5678 9012 3456" maxlength="19" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Cardholder Name</label>
-                        <input type="text" placeholder="JOHN DOE" required>
-                    </div>
-                    <div class="card-row">
-                        <div class="form-group">
-                            <label>Expiry Date</label>
-                            <input type="text" placeholder="MM/YY" maxlength="5" required>
-                        </div>
-                        <div class="form-group">
-                            <label>CVV</label>
-                            <input type="password" placeholder="***" maxlength="4" required>
-                        </div>
-                    </div>
-                </div>
+            <div class="btn-group">
+                <form action="PaymentServlet" method="POST" style="flex:1;">
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" class="btn btn-cancel" style="width:100%;">Cancel</button>
+                </form>
+                <form action="PaymentServlet" method="POST" style="flex:1;">
+                    <input type="hidden" name="action" value="confirm">
+                    <button type="submit" class="btn btn-confirm" style="width:100%;">Pay Now</button>
+                </form>
+            </div>
 
-                <button type="submit" class="btn-pay">Pay RM <%= totalAmount %></button>
-                <button type="button" class="btn-cancel" onclick="cancelPayment()">Cancel Transaction</button>
-
-                <div class="security-notice">
-                    Your payment information is protected with bank-level security. We do not store your card details.
-                </div>
-            </form>
+            <div class="secure-badge">
+                <span>🔒</span> Your payment is secure and encrypted
+            </div>
         </div>
-    </main>
+    </section>
 
-    <footer class="bank-footer">
-        <p>© 2024 MYBank Online Payment Gateway. All rights reserved.</p>
-        <p style="margin-top: 5px;">
-            <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">Contact Support</a>
-        </p>
+    <footer>
+        <div class="footer-col">
+            <h4>ABOUT YAYA</h4>
+            <a href="#">HISTORY</a>
+            <a href="#">WORK IN YAYA</a>
+        </div>
+        <div class="footer-col">
+            <h4>ADDRESS</h4>
+            <p>BANGI AVENUE HEIGHT</p>
+            <p>DAMANSARA UTAMA</p>
+            <p>96029 DAMANSARA</p>
+            <p>SELANGOR</p>
+        </div>
+        <div class="footer-col">
+            <h4>CONTACT</h4>
+            <p>03-78279388 (OFFICE HOUR)</p>
+            <p>yayacosmetic@hotline.com</p>
+            <p>@yayacosmeticofficial (Instagram)</p>
+        </div>
     </footer>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <div class="loading-text">Processing your payment...</div>
-    </div>
-
     <script>
-        function selectBank(element) {
-            document.querySelectorAll('.bank-option').forEach(opt => opt.classList.remove('selected'));
-            element.classList.add('selected');
-        }
-
-        function processPayment(event) {
-            event.preventDefault();
-            
-            // Show loading
-            document.getElementById('loadingOverlay').classList.add('active');
-            
-            // Simulate payment processing
-            setTimeout(function() {
-                // Redirect to order confirmation
-                window.location.href = 'PlaceOrder.jsp?status=success&ref=<%= orderRef %>';
-            }, 3000);
-        }
-
-        function cancelPayment() {
-            if (confirm('Are you sure you want to cancel this transaction?')) {
-                window.location.href = 'Cart.jsp';
-            }
-        }
-
-        // Format card number input
-        document.querySelector('input[placeholder="1234 5678 9012 3456"]').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
-            let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
-            e.target.value = formatted;
-        });
-
-        // Format expiry date input
-        document.querySelector('input[placeholder="MM/YY"]').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length >= 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2);
-            }
-            e.target.value = value;
+        document.querySelectorAll('.bank-option').forEach(function(el) {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.bank-option').forEach(function(e) { e.classList.remove('selected'); });
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
         });
     </script>
 

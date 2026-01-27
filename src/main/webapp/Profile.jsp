@@ -1,403 +1,78 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.*, com.yc.model.User, com.yc.model.Address" %>
 <%
-    // Get cart count for badge
-    Map<String, Integer> cartItems = (Map<String, Integer>) session.getAttribute("cartItems");
-    int cartCount = 0;
-    if (cartItems != null) {
-        for (Integer qty : cartItems.values()) {
-            cartCount += qty;
-        }
-    }
-
-    // Store user profile in session for persistence
-    Map<String, String> userProfile = (Map<String, String>) session.getAttribute("userProfile");
+    User user = (User) request.getAttribute("user");
+    List<Address> addresses = (List<Address>) request.getAttribute("addresses");
+    Integer cartCount = (Integer) request.getAttribute("cartCount");
+    String success = request.getParameter("success");
+    String error = request.getParameter("error");
     
-    if (userProfile == null) {
-        userProfile = new LinkedHashMap<>();
-        userProfile.put("name", "Aiya Mala Johan");
-        userProfile.put("email", "aiyamala@gmail.com");
-        userProfile.put("phone", "012-3456789");
-        userProfile.put("password", "user123");
-        session.setAttribute("userProfile", userProfile);
+    if (user == null) {
+        response.sendRedirect("ProfileServlet");
+        return;
     }
     
-    String userName = userProfile.get("name");
-    String userEmail = userProfile.get("email");
-    String userPhone = userProfile.get("phone");
-    String userPassword = userProfile.get("password");
-    
-    // Check for success message
-    String successMsg = request.getParameter("success");
-    String updatedField = request.getParameter("updated");
+    if (cartCount == null) cartCount = 0;
 %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yaya Cosmetic - Profile</title>
+    <title>Yaya Cosmetic - My Profile</title>
     <style>
-        body { 
-            margin: 0; 
-            font-family: Arial, sans-serif; 
-            background-color: #ffffff; 
-        }
-        
-        /* Header */
-        header {
-            background-color: #7b0d1e;
-            color: white;
-            padding: 10px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #fcfcfc; }
+        header { background-color: #7b0d1e; color: white; padding: 10px 50px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-container { display: flex; align-items: center; gap: 15px; }
+        .logo-img { height: 50px; width: auto; }
+        .brand-name { font-family: 'Times New Roman', serif; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; }
+        nav { display: flex; align-items: center; gap: 25px; }
+        nav a { color: white; text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; }
+        .cart-icon { position: relative; }
+        .cart-badge { position: absolute; top: -8px; right: -8px; background-color: #ffc107; color: #000; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 50%; }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+        .profile-section { padding: 40px 60px; min-height: 60vh; }
+        .section-title { font-size: 32px; font-weight: bold; margin: 0 0 30px 0; }
 
-        .logo-img {
-            height: 50px;
-            width: auto;
-        }
+        .message { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .success-message { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error-message { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
 
-        .brand-name {
-            font-size: 28px;
-            font-family: 'Times New Roman', serif;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .profile-card { background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; }
 
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        nav {
-            display: flex;
-            align-items: center;
-        }
+        .profile-field { margin-bottom: 20px; }
+        .field-label { font-size: 12px; color: #666; text-transform: uppercase; margin-bottom: 5px; }
+        .field-value { font-size: 16px; font-weight: 500; }
 
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #ffffff;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px black;
-            z-index: 1;
-            right: 0;
-            margin-top: 5px;
-        }
-        
-        .dropdown-content a {
-            color: #7b0d1e !important;
-            padding: 12px 16px;
-            display: block;
-            text-align: left;
-            margin: 0;
-            font-size: 13px;
-            text-transform: none;
-            border-bottom: 1px solid;
-        }
-        
-        .dropdown-content a:hover {
-            background-color: #f1f1f1;
-        }
-        
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
-        
-        .dropdown:hover .dropbtn {
-            color: #ccc;
-        }
-        
-        /* Cart Badge */
-        .cart-link {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .cart-badge {
-            position: absolute;
-            top: -10px;
-            right: -12px;
-            background-color: #ffd700;
-            color: #7b0d1e;
-            font-size: 11px;
-            font-weight: bold;
-            min-width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; box-sizing: border-box; }
 
-        /* Main Content */
-        .profile-container {
-            padding: 40px 10%;
-            min-height: 60vh;
-        }
+        .btn-save { padding: 10px 25px; background-color: #7b0d1e; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-save:hover { background-color: #5a0a15; }
 
-        .page-title {
-            font-size: 36px;
-            font-weight: bold;
-            margin: 0 0 40px 0;
-            color: #000;
-        }
+        .address-card { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        .address-label { font-weight: bold; margin-bottom: 5px; }
+        .address-text { font-size: 14px; color: #666; }
+        .address-default { display: inline-block; padding: 3px 10px; background-color: #7b0d1e; color: white; font-size: 10px; border-radius: 10px; margin-left: 10px; }
+        .address-actions { margin-top: 10px; }
+        .address-actions button { padding: 5px 15px; font-size: 12px; margin-right: 10px; cursor: pointer; border-radius: 3px; }
+        .btn-delete { background: #dc3545; color: white; border: none; }
 
-        .profile-content {
-            max-width: 800px;
-        }
+        .btn-add-address { display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 15px; }
 
-        /* Success Message */
-        .success-message {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+        .add-address-form { display: none; margin-top: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px; }
+        .add-address-form.show { display: block; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        .success-message .close-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #155724;
-        }
+        footer { background-color: #7b0d1e; color: white; padding: 40px 60px; display: flex; justify-content: space-between; margin-top: 50px; }
+        .footer-col { flex: 1; }
+        .footer-col h4 { font-size: 16px; margin-bottom: 20px; text-transform: uppercase; }
+        .footer-col p, .footer-col a { display: block; color: #ffffff; text-decoration: none; font-size: 13px; margin: 8px 0; }
 
-        .avatar-section {
-            display: flex;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: #7b0d1e;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 20px;
-        }
-
-        .avatar svg {
-            width: 50px;
-            height: 50px;
-            fill: white;
-        }
-
-        .avatar-info h2 {
-            margin: 0 0 5px 0;
-            font-size: 24px;
-        }
-
-        .avatar-info p {
-            margin: 0;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .profile-field {
-            margin-bottom: 25px;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            border-left: 4px solid #7b0d1e;
-        }
-
-        .field-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .field-label {
-            font-size: 12px;
-            font-weight: bold;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .field-value {
-            font-size: 18px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .edit-btn {
-            background-color: #001a72;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: background-color 0.3s;
-        }
-
-        .edit-btn:hover {
-            background-color: #000f45;
-        }
-
-        /* Password field special styling */
-        .password-field {
-            border-left-color: #001a72;
-        }
-
-        .password-value-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .password-value {
-            font-size: 18px;
-            color: #333;
-            font-weight: 500;
-            letter-spacing: 3px;
-        }
-
-        .eye-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
-            font-size: 18px;
-            color: #666;
-        }
-
-        .eye-btn:hover {
-            color: #333;
-        }
-
-        .change-password-btn {
-            background-color: #7b0d1e;
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: background-color 0.3s;
-        }
-
-        .change-password-btn:hover {
-            background-color: #5a0a15;
-        }
-
-        /* Non-editable field */
-        .field-readonly {
-            opacity: 0.8;
-        }
-
-        .readonly-badge {
-            font-size: 10px;
-            background-color: #e0e0e0;
-            color: #666;
-            padding: 4px 10px;
-            border-radius: 10px;
-            text-transform: uppercase;
-        }
-
-        .logout-section {
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 2px solid #e0e0e0;
-        }
-
-        .logout-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 12px 40px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: background-color 0.3s;
-        }
-
-        .logout-btn:hover {
-            background-color: #c82333;
-        }
-
-        /* Footer */
-        footer {
-            background-color: #7b0d1e;
-            color: white;
-            padding: 40px 60px;
-            display: flex;
-            justify-content: space-between;
-            margin-top: 50px;
-        }
-
-        .footer-col {
-            flex: 1;
-        }
-
-        .footer-col h4 {
-            font-size: 16px;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-        }
-
-        .footer-col p, .footer-col a {
-            display: block;
-            color: #ffffff;
-            text-decoration: none;
-            font-size: 13px;
-            margin: 8px 0;
-            line-height: 1.4;
-        }
-
-        @media (max-width: 768px) {
-            .field-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .avatar-section {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .avatar {
-                margin-right: 0;
-                margin-bottom: 15px;
-            }
-        }
+        @media (max-width: 800px) { .profile-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -405,124 +80,160 @@
     <header>
         <div class="logo-container">
             <img src="LOGO.png" alt="Yaya Logo" class="logo-img">
-            <div class="brand-name">YAYA COSMETIC</div>
+            <span class="brand-name">Yaya Cosmetic</span>
         </div>
         <nav>
-            <a href="HomePage.jsp">HOME</a>
-            <a href="Product.jsp">PRODUCT</a>
-            <a href="Cart.jsp" class="cart-link">CART<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount > 99 ? "99+" : cartCount %></span><% } %></a>
-            <a href="History.jsp">HISTORY</a>
-            <div class="dropdown">
-                <% 
-                    String currentUser = (String) session.getAttribute("userEmail"); 
-                    if (currentUser == null) { 
-                %>
-                    <a href="#" class="dropbtn">Profile</a>
-                    <div class="dropdown-content">
-                        <a href="Login.jsp">Login</a>
-                        <a href="Signup.jsp">Sign up</a>
-                    </div>
-                <% 
-                    } else { 
-                %>
-                    <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
-                    <div class="dropdown-content">
-                        <a href="Profile.jsp">View Profile</a>
-                        <a href="Logout.jsp">Logout</a>
-                    </div>
-                <% 
-                    } 
-                %>
-            </div>
+            <a href="HomePage.jsp">Home</a>
+            <a href="ProductListServlet">Products</a>
+            <a href="OrderHistoryServlet">History</a>
+            <a href="ProfileServlet">Profile</a>
+            <a href="LogoutServlet">Logout</a>
+            <a href="CartServlet" class="cart-icon">🛒<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount %></span><% } %></a>
         </nav>
     </header>
 
-    <div class="profile-container">
-        <h1 class="page-title">MY PROFILE</h1>
+    <section class="profile-section">
+        <h2 class="section-title">MY PROFILE</h2>
 
-        <% if ("true".equals(successMsg)) { %>
-            <div class="success-message" id="successMsg">
-                <span><strong>Success!</strong> 
-                    <% if ("name".equals(updatedField)) { %>
-                        Your name has been updated.
-                    <% } else if ("phone".equals(updatedField)) { %>
-                        Your phone number has been updated.
-                    <% } else if ("password".equals(updatedField)) { %>
-                        Your password has been changed successfully.
-                    <% } else { %>
-                        Profile updated successfully.
-                    <% } %>
-                </span>
-                <button class="close-btn" onclick="document.getElementById('successMsg').style.display='none'">&times;</button>
+        <% if (success != null) { %>
+            <div class="message success-message">
+                <% if ("profile".equals(success)) { %>Profile updated successfully!
+                <% } else if ("password".equals(success)) { %>Password changed successfully!
+                <% } else if ("addressadded".equals(success)) { %>Address added successfully!
+                <% } else if ("addressdeleted".equals(success)) { %>Address deleted successfully!
+                <% } else { %>Changes saved successfully!<% } %>
             </div>
         <% } %>
 
-        <div class="profile-content">
-            <div class="avatar-section">
-                <div class="avatar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>
-                </div>
-                <div class="avatar-info">
-                    <h2><%= userName %></h2>
-                    <p>Member</p>
-                </div>
+        <% if (error != null) { %>
+            <div class="message error-message">
+                <% if ("wrongpassword".equals(error)) { %>Current password is incorrect.
+                <% } else if ("passwordmismatch".equals(error)) { %>New passwords do not match.
+                <% } else { %>An error occurred. Please try again.<% } %>
+            </div>
+        <% } %>
+
+        <div class="profile-grid">
+            <div class="profile-card">
+                <div class="card-title">Personal Information</div>
+                <form action="UpdateProfileServlet" method="POST">
+                    <input type="hidden" name="action" value="updateProfile">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" name="fullName" value="<%= user.getFullName() %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email (cannot be changed)</label>
+                        <input type="email" value="<%= user.getEmail() %>" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" name="phone" value="<%= user.getPhone() != null ? user.getPhone() : "" %>">
+                    </div>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </form>
             </div>
 
-            <!-- Full Name - Editable -->
-            <div class="profile-field">
-                <div class="field-header">
-                    <span class="field-label">Full Name</span>
-                    <button class="edit-btn" onclick="window.location.href='EditProfile.jsp?field=name'">EDIT</button>
-                </div>
-                <div class="field-value"><%= userName %></div>
+            <div class="profile-card">
+                <div class="card-title">Change Password</div>
+                <form action="UpdateProfileServlet" method="POST">
+                    <input type="hidden" name="action" value="changePassword">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" name="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" name="newPassword" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" name="confirmPassword" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn-save">Change Password</button>
+                </form>
             </div>
 
-            <!-- Email - Not Editable -->
-            <div class="profile-field field-readonly">
-                <div class="field-header">
-                    <span class="field-label">Email Address</span>
-                    <span class="readonly-badge">Cannot be changed</span>
-                </div>
-                <div class="field-value"><%= userEmail %></div>
-            </div>
+            <div class="profile-card" style="grid-column: span 2;">
+                <div class="card-title">My Addresses</div>
+                
+                <% if (addresses == null || addresses.isEmpty()) { %>
+                    <p style="color:#666;">You don't have any saved addresses yet.</p>
+                <% } else { 
+                    for (Address addr : addresses) { %>
+                    <div class="address-card">
+                        <div class="address-label">
+                            <%= addr.getLabel() != null ? addr.getLabel() : "Address" %>
+                            <% if (addr.isDefault()) { %><span class="address-default">Default</span><% } %>
+                        </div>
+                        <div class="address-text">
+                            <%= addr.getAddressLine() %><br>
+                            <%= addr.getCity() %>, <%= addr.getState() %> <%= addr.getPostalCode() %><br>
+                            Phone: <%= addr.getPhone() %>
+                        </div>
+                        <div class="address-actions">
+                            <form action="AddressServlet" method="POST" style="display:inline;">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="addressId" value="<%= addr.getAddressId() %>">
+                                <button type="submit" class="btn-delete" onclick="return confirm('Delete this address?')">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                <% } 
+                } %>
 
-            <!-- Phone Number - Editable -->
-            <div class="profile-field">
-                <div class="field-header">
-                    <span class="field-label">Phone Number</span>
-                    <button class="edit-btn" onclick="window.location.href='EditProfile.jsp?field=phone'">EDIT</button>
-                </div>
-                <div class="field-value"><%= userPhone %></div>
-            </div>
+                <button class="btn-add-address" onclick="document.getElementById('addAddressForm').classList.toggle('show')">+ Add New Address</button>
 
-            <!-- Password - With Eye Toggle and Change Password -->
-            <div class="profile-field password-field">
-                <div class="field-header">
-                    <span class="field-label">Password</span>
-                    <button class="change-password-btn" onclick="window.location.href='EditProfile.jsp?field=password'">CHANGE PASSWORD</button>
+                <div id="addAddressForm" class="add-address-form">
+                    <form action="AddressServlet" method="POST">
+                        <input type="hidden" name="action" value="add">
+                        <div class="form-group">
+                            <label>Label (e.g., Home, Office)</label>
+                            <input type="text" name="label" placeholder="Home">
+                        </div>
+                        <div class="form-group">
+                            <label>Address Line</label>
+                            <input type="text" name="addressLine" required placeholder="Street address">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>City</label>
+                                <input type="text" name="city" required>
+                            </div>
+                            <div class="form-group">
+                                <label>State</label>
+                                <input type="text" name="state" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Postal Code</label>
+                                <input type="text" name="postalCode" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Country</label>
+                                <input type="text" name="country" value="Malaysia">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="text" name="phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" name="isDefault"> Set as default address</label>
+                        </div>
+                        <button type="submit" class="btn-save">Add Address</button>
+                    </form>
                 </div>
-                <div class="password-value-container">
-                    <span class="password-value" id="passwordDisplay">••••••••</span>
-                    <button class="eye-btn" onclick="togglePassword()" id="eyeBtn" title="Show password">
-                        <span id="eyeIcon">👁️</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="logout-section">
-                <button class="logout-btn" onclick="if(confirm('Are you sure you want to logout?')) { window.location.href='Logout.jsp'; }">LOGOUT</button>
             </div>
         </div>
-    </div>
+    </section>
 
     <footer>
         <div class="footer-col">
             <h4>ABOUT YAYA</h4>
             <a href="#">HISTORY</a>
             <a href="#">WORK IN YAYA</a>
-            <a href="#">BELABOUR</a>
         </div>
         <div class="footer-col">
             <h4>ADDRESS</h4>
@@ -534,43 +245,10 @@
         <div class="footer-col">
             <h4>CONTACT</h4>
             <p>03-78279388 (OFFICE HOUR)</p>
-            <p>yayacosmetic@hotline.com (official email)</p>
+            <p>yayacosmetic@hotline.com</p>
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
-
-    <script>
-        var passwordVisible = false;
-        var actualPassword = '<%= userPassword %>';
-        
-        function togglePassword() {
-            var display = document.getElementById('passwordDisplay');
-            var eyeIcon = document.getElementById('eyeIcon');
-            var eyeBtn = document.getElementById('eyeBtn');
-            
-            if (passwordVisible) {
-                display.textContent = '••••••••';
-                eyeIcon.textContent = '👁️';
-                eyeBtn.title = 'Show password';
-                passwordVisible = false;
-            } else {
-                display.textContent = actualPassword;
-                eyeIcon.textContent = '🙈';
-                eyeBtn.title = 'Hide password';
-                passwordVisible = true;
-            }
-        }
-
-        // Auto-hide success message after 5 seconds
-        setTimeout(function() {
-            var msg = document.getElementById('successMsg');
-            if (msg) {
-                msg.style.transition = 'opacity 0.5s';
-                msg.style.opacity = '0';
-                setTimeout(function() { msg.style.display = 'none'; }, 500);
-            }
-        }, 5000);
-    </script>
 
 </body>
 </html>
