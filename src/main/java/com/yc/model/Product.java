@@ -9,14 +9,16 @@ public class Product {
     private int updatedBy;
     private String name;
     private String description;
-    private BigDecimal price;
+    private double price;
     private int stockQty;
     private String image;
+    private String colors;
+    
 
     public Product() {}
 
     public Product(int productId, String name, String description,
-                   BigDecimal price, String image) {
+                   double price, String image) {
         this.productId = productId;
         this.name = name;
         this.description = description;
@@ -42,13 +44,17 @@ public class Product {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 
     public int getStockQty() { return stockQty; }
     public void setStockQty(int stockQty) { this.stockQty = stockQty; }
 
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
+    
+    public String getColors(){ return colors; }
+    public void setColors(String colors){ this.colors = colors; }
+
 }
 

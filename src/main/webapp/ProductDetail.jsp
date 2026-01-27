@@ -1,54 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.yc.model.Product" %>
 <%
-    // 1. Get the "id" from the URL (e.g., ProductDetail.jsp?id=3)
-    String productId = request.getParameter("id");
+    Product product = (Product) request.getAttribute("product");
 
-    String title = "YAYA GOLD PALLATE";
-    String price = "RM 100";
-    String imgClosed = "pic product/3.png";
-    String imgOpen = "pic product/DETAIL 3.png";
-    String colors = "Coffee Brown, Shiny Gold, Yellow Shine, Rose Shine, Gold Pink Shine, Pink Sparkle, Burgundy, Orange Shine, Brown Sparkle, Black, Maroon Shine, Burgundy Shine";
-
-    // 3. Logic to switch data based on the ID
-    if ("2".equals(productId)) {
-        title = "YAYA BLUE PALLATE";
-        imgClosed = "pic product/4.png";
-        imgOpen = "pic product/DETAIL 4.png";
-        colors = "Sky, Navy, Cobalt, Sapphire, Azure, Turquoise, Indigo, Teal, Cerulean, Midnight, Ice Blue, Denim";
-    } else if ("3".equals(productId)) {
-        title = "YAYA GREEN PALLATE";
-        imgClosed = "pic product/5.png";
-        imgOpen = "pic product/DETAIL 5.png";
-        colors = "Emerald, Mint, Olive, Forest, Lime, Sage, Jade, Moss, Seafoam, Pistachio, Kelly Green, Pine";
-    } else if ("4".equals(productId)) {
-        title = "YAYA BLACK PALLATE";
-        imgClosed = "pic product/6.png";
-        imgOpen = "pic product/DETAIL 6.png";
-        colors = "Onyx, Charcoal, Slate, Obsidian, Smoke, Jet Black, Ash, Graphite, Raven, Ebony, Gunmetal, Coal";
-    }  else if ("5".equals(productId)){
-        title = "YAYA PINK PALLATE";
-        imgClosed = "pic product/7.png";
-        imgOpen = "pic product/DETAIL 7.png";
-        colors = "Rose, Blush, Fuchsia, Magenta, Flamingo, Salmon, Coral Pink, Bubblegum, Sakura, Peony, Hot Pink, Taffy";
-    }  else if ("6".equals(productId)){
-        title = "YAYA ORANGE PALLATE";
-        imgClosed = "pic product/8.png";
-        imgOpen = "pic product/DETAIL 8.png";
-        colors = "Amber, Apricot, Peach, Tangerine, Carrot, Pumpkin, Coral, Bronze, Marmalade, Saffron, Papaya, Sunset";
-    }  else if ("7".equals(productId)){
-        title = "YAYA PURPLE PALLATE";
-        imgClosed = "pic product/9.png";
-        imgOpen = "pic product/DETAIL 9.png";
-        colors = "Lavender, Amethyst, Plum, Orchid, Violet, Mauve, Grape, Lilac, Sangria, Mulberry, Periwinkle, Eggplant";
-    }  else if ("8".equals(productId)){
-        title = "YAYA RED PALLATE";
-        imgClosed = "pic product/10.png";
-        imgOpen = "pic product/DETAIL 10.png";
-        colors = "Crimson, Ruby, Scarlet, Burgundy, Cherry, Brick, Garnet, Maroon, Merlot, Poppy, Currant, Candy Apple";
-    }  
-    
-    
+    if (product == null) {
+        response.sendRedirect("ProductServlet");
+        return;
+    }
 %>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -321,24 +281,30 @@
     </header>
     
     <main class="main-content">
-        <div class="product-images">
-            <img src="<%= imgClosed %>" alt="<%= title %> Closed">
-            <img src="<%= imgOpen %>" alt="<%= title %> Open">
+    <div class="product-images">
+        <img src="<%= product.getImage() %>" alt="<%= product.getName() %>">
+    </div>
+
+    <div class="product-info">
+        <h1><%= product.getName() %></h1>
+
+        <div class="price">
+            RM <%= String.format("%.2f", product.getPrice()) %>
         </div>
 
-        <div class="product-info">
-            <h1><%= title %></h1>
-            <div class="price"><%= price %></div>
-            <div class="description">
-                <strong>COLOR:</strong> <%= colors %>
-            </div>
-           <form action="Cart.jsp" method="POST">
-                <input type="hidden" name="action" value="add">
-                <input type="hidden" name="id" value="<%= productId %>">
-                <button type="submit" class="add-to-cart-btn">ADD TO CART</button>
-            </form>
+        <div class="description">
+            <strong>COLOR:</strong> <%= product.getColors() %>
         </div>
-    </main>
+
+        <form action="Cart.jsp" method="GET">
+            <input type="hidden" name="action" value="add">
+            <input type="hidden" name="id" value="<%= product.getProductId() %>">
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="add-to-cart-btn">ADD TO CART</button>
+        </form>
+    </div>
+</main>
+
 
     <footer>
         <div class="footer-col">
