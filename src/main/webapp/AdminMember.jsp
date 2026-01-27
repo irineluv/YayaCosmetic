@@ -1,36 +1,17 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.*, com.yc.model.User, java.text.SimpleDateFormat" %>
 <%
-    // Define Member class
-    class Member {
-        String id;
-        String name;
-        String email;
-        String phone;
-        String joinDate;
-        String totalOrders;
-        
-        Member(String id, String name, String email, String phone, String joinDate, String totalOrders) {
-            this.id = id;
-            this.name = name;
-            this.email = email;
-            this.phone = phone;
-            this.joinDate = joinDate;
-            this.totalOrders = totalOrders;
-        }
+    List<User> members = (List<User>) request.getAttribute("members");
+    Integer totalMembers = (Integer) request.getAttribute("totalMembers");
+    String searchQuery = (String) request.getAttribute("searchQuery");
+    
+    if (members == null) {
+        response.sendRedirect("AdminMemberServlet");
+        return;
     }
     
-    // Sample member list
-    List<Member> members = new ArrayList<>();
-    members.add(new Member("01", "ALYA MASARAH", "alya99@mail.com", "012-3456789", "09/09/2024", "5"));
-    members.add(new Member("02", "ANIS ZIRA", "aniszira@mail.com", "019-8765432", "21/08/2024", "3"));
-    members.add(new Member("03", "VERONICA MALIS", "vero@mail.com", "011-2233445", "08/07/2024", "8"));
-    members.add(new Member("04", "MONDY MONA", "mondy@mail.com", "013-9988776", "08/05/2024", "2"));
-    members.add(new Member("05", "SARAH AHMAD", "sarah@mail.com", "016-5544332", "15/10/2024", "12"));
-    
-    // Get current date for report
-    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMMM yyyy");
-    String currentDate = sdf.format(new java.util.Date());
+    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    String currentDate = new SimpleDateFormat("dd MMMM yyyy").format(new java.util.Date());
 %>
 
 <!DOCTYPE html>
@@ -46,7 +27,6 @@
             background-color: #ffffff; 
         }
         
-        /* Header */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -82,7 +62,6 @@
             font-weight: 600;
         }
 
-        /* Main Content */
         .member-container {
             padding: 40px 5%;
             min-height: 60vh;
@@ -118,6 +97,28 @@
             font-weight: bold;
         }
 
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .search-box button {
+            padding: 10px 20px;
+            background-color: #001a72;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
         .print-btn {
             display: flex;
             align-items: center;
@@ -131,19 +132,12 @@
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
-            transition: background-color 0.3s;
         }
 
         .print-btn:hover {
             background-color: #218838;
         }
 
-        .print-btn::before {
-            content: "🖨️";
-            font-size: 16px;
-        }
-
-        /* Table */
         .table-wrapper {
             overflow-x: auto;
             background-color: #fff;
@@ -197,29 +191,19 @@
             font-weight: bold;
         }
 
-        /* Print Styles */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            
-            #printArea, #printArea * {
-                visibility: visible;
-            }
-            
-            #printArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-            
-            .no-print {
-                display: none !important;
-            }
+        .no-members {
+            text-align: center;
+            padding: 60px;
+            color: #666;
         }
 
-        /* Footer */
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+
         footer {
             background-color: #7b0d1e;
             color: white;
@@ -245,107 +229,26 @@
             text-decoration: none;
             font-size: 13px;
             margin: 8px 0;
-            line-height: 1.4;
         }
 
-        /* Print Report Styles */
-        .print-report {
-            display: none;
-        }
+        .print-report { display: none; }
 
         @media print {
             .print-report {
                 display: block;
                 padding: 40px;
             }
-            
             .report-header {
                 text-align: center;
                 margin-bottom: 40px;
                 border-bottom: 3px solid #7b0d1e;
                 padding-bottom: 20px;
             }
-            
-            .report-header h1 {
-                color: #7b0d1e;
-                margin: 0 0 10px 0;
-                font-size: 28px;
-            }
-            
-            .report-header p {
-                margin: 5px 0;
-                color: #666;
-            }
-            
-            .report-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 30px;
-            }
-            
-            .report-table th,
-            .report-table td {
-                border: 1px solid #ddd;
-                padding: 12px;
-                text-align: left;
-            }
-            
-            .report-table th {
-                background-color: #7b0d1e;
-                color: white;
-            }
-            
-            .report-table tbody tr:nth-child(even) {
-                background-color: #f9f9f9;
-            }
-            
-            .report-footer {
-                margin-top: 40px;
-                padding-top: 20px;
-                border-top: 1px solid #ddd;
-                text-align: center;
-                font-size: 12px;
-                color: #666;
-            }
-            
-            .report-summary {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 30px;
-                padding: 20px;
-                background-color: #f5f5f5;
-            }
-            
-            .summary-item {
-                text-align: center;
-            }
-            
-            .summary-item .value {
-                font-size: 24px;
-                font-weight: bold;
-                color: #7b0d1e;
-            }
-            
-            .summary-item .label {
-                font-size: 12px;
-                color: #666;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .member-table {
-                font-size: 12px;
-            }
-            
-            .member-table th,
-            .member-table td {
-                padding: 10px 5px;
-            }
+            .report-header h1 { color: #7b0d1e; margin: 0 0 10px 0; font-size: 28px; }
+            .report-header p { margin: 5px 0; color: #666; }
+            .report-table { width: 100%; border-collapse: collapse; }
+            .report-table th, .report-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+            .report-table th { background-color: #7b0d1e; color: white; }
         }
     </style>
 </head>
@@ -357,11 +260,11 @@
             <div class="brand-name">Yaya Cosmetic</div>
         </div>
         <nav>
-            <a href="AdminHome.jsp">HOME</a>
-            <a href="AdminProduct.jsp">PRODUCT</a>
-            <a href="AdminOrder.jsp">ORDER</a>
-            <a href="AdminMember.jsp">MEMBER</a>
-            <a href="AdminProfile.jsp">PROFILE</a>
+            <a href="AdminDashboardServlet">HOME</a>
+            <a href="AdminProductServlet">PRODUCT</a>
+            <a href="AdminOrderServlet">ORDER</a>
+            <a href="AdminMemberServlet">MEMBER</a>
+            <a href="AdminProfileServlet">PROFILE</a>
         </nav>
     </header>
 
@@ -369,37 +272,49 @@
         <div class="page-header">
             <h1 class="page-title">MEMBER MANAGEMENT</h1>
             <div class="header-actions">
-                <span class="stat-badge">Total Members: <%= members.size() %></span>
-                <button class="print-btn" onclick="printReport()">Print Report</button>
+                <span class="stat-badge">Total Members: <%= totalMembers %></span>
+                <form action="AdminMemberServlet" method="GET" class="search-box">
+                    <input type="text" name="search" placeholder="Search members..." 
+                           value="<%= searchQuery != null ? searchQuery : "" %>">
+                    <button type="submit">Search</button>
+                </form>
+                <button class="print-btn" onclick="window.print()">Print Report</button>
             </div>
         </div>
 
-        <div class="table-wrapper">
-            <table class="member-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Join Date</th>
-                        <th>Total Orders</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% for (Member member : members) { %>
+        <% if (members.isEmpty()) { %>
+            <div class="no-members">
+                <h2>No Members Found</h2>
+                <p>There are no members matching your search.</p>
+            </div>
+        <% } else { %>
+            <div class="table-wrapper">
+                <table class="member-table">
+                    <thead>
                         <tr>
-                            <td class="member-id">#<%= member.id %></td>
-                            <td class="member-name"><%= member.name %></td>
-                            <td><%= member.email %></td>
-                            <td><%= member.phone %></td>
-                            <td><%= member.joinDate %></td>
-                            <td><span class="orders-badge"><%= member.totalOrders %> orders</span></td>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Join Date</th>
+                            <th>Total Orders</th>
                         </tr>
-                    <% } %>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        <% for (User member : members) { %>
+                            <tr>
+                                <td class="member-id">#<%= member.getUserId() %></td>
+                                <td class="member-name"><%= member.getFullName() %></td>
+                                <td><%= member.getEmail() %></td>
+                                <td><%= member.getPhone() != null ? member.getPhone() : "-" %></td>
+                                <td><%= member.getCreatedAt() != null ? sdf.format(member.getCreatedAt()) : "-" %></td>
+                                <td><span class="orders-badge"><%= member.getOrderCount() %> orders</span></td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
     </div>
 
     <!-- Print Report Template -->
@@ -408,27 +323,6 @@
             <h1>YAYA COSMETIC</h1>
             <p><strong>Member Report</strong></p>
             <p>Generated on: <%= currentDate %></p>
-        </div>
-        
-        <div class="report-summary">
-            <div class="summary-item">
-                <div class="value"><%= members.size() %></div>
-                <div class="label">Total Members</div>
-            </div>
-            <div class="summary-item">
-                <div class="value"><%
-                    int totalOrders = 0;
-                    for (Member m : members) {
-                        totalOrders += Integer.parseInt(m.totalOrders);
-                    }
-                    out.print(totalOrders);
-                %></div>
-                <div class="label">Total Orders</div>
-            </div>
-            <div class="summary-item">
-                <div class="value"><%= currentDate %></div>
-                <div class="label">Report Date</div>
-            </div>
         </div>
         
         <table class="report-table">
@@ -443,24 +337,18 @@
                 </tr>
             </thead>
             <tbody>
-                <% for (Member member : members) { %>
+                <% for (User member : members) { %>
                     <tr>
-                        <td>#<%= member.id %></td>
-                        <td><%= member.name %></td>
-                        <td><%= member.email %></td>
-                        <td><%= member.phone %></td>
-                        <td><%= member.joinDate %></td>
-                        <td><%= member.totalOrders %></td>
+                        <td>#<%= member.getUserId() %></td>
+                        <td><%= member.getFullName() %></td>
+                        <td><%= member.getEmail() %></td>
+                        <td><%= member.getPhone() != null ? member.getPhone() : "-" %></td>
+                        <td><%= member.getCreatedAt() != null ? sdf.format(member.getCreatedAt()) : "-" %></td>
+                        <td><%= member.getOrderCount() %></td>
                     </tr>
                 <% } %>
             </tbody>
         </table>
-        
-        <div class="report-footer">
-            <p>Yaya Cosmetic Sdn Bhd | Bangi Avenue Height, Damansara Utama, 96029 Damansara, Selangor</p>
-            <p>Tel: 03-78279388 | Email: yayacosmetic@hotline.com</p>
-            <p>This is a computer-generated report. No signature required.</p>
-        </div>
     </div>
 
     <footer class="no-print">
@@ -468,7 +356,6 @@
             <h4>ABOUT YAYA</h4>
             <a href="#">HISTORY</a>
             <a href="#">WORK IN YAYA</a>
-            <a href="#">BELABOUR</a>
         </div>
         <div class="footer-col">
             <h4>ADDRESS</h4>
@@ -480,16 +367,10 @@
         <div class="footer-col">
             <h4>CONTACT</h4>
             <p>03-78279388 (OFFICE HOUR)</p>
-            <p>yayacosmetic@hotline.com (official email)</p>
+            <p>yayacosmetic@hotline.com</p>
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
-
-    <script>
-        function printReport() {
-            window.print();
-        }
-    </script>
 
 </body>
 </html>
