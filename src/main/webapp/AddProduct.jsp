@@ -1,65 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.*, com.yc.model.Category" %>
 <%
-    // Get products from session
-    Map<String, String[]> productsData = (Map<String, String[]>) session.getAttribute("adminProducts");
+    List<Category> categories = (List<Category>) request.getAttribute("categories");
+    List<String> availableImages = (List<String>) request.getAttribute("availableImages");
+    String error = (String) request.getAttribute("error");
     
-    if (productsData == null) {
-        productsData = new LinkedHashMap<>();
-        session.setAttribute("adminProducts", productsData);
-    }
-    
-    // Handle form submission
-    String action = request.getParameter("action");
-    String errorMessage = null;
-    
-    if ("add".equals(action)) {
-        String name = request.getParameter("name");
-        String description = request.getParameter("description");
-        String price = request.getParameter("price");
-        String image = request.getParameter("image");
-        
-        // Validation
-        if (name == null || name.trim().isEmpty()) {
-            errorMessage = "Product name is required.";
-        } else if (description == null || description.trim().isEmpty()) {
-            errorMessage = "Product description is required.";
-        } else if (price == null || price.trim().isEmpty()) {
-            errorMessage = "Product price is required.";
-        } else {
-            try {
-                // Validate price is a number
-                int priceValue = Integer.parseInt(price.trim());
-                if (priceValue <= 0) {
-                    errorMessage = "Price must be greater than 0.";
-                } else {
-                    // Generate new product ID
-                    int maxId = 0;
-                    for (String id : productsData.keySet()) {
-                        try {
-                            int idNum = Integer.parseInt(id);
-                            if (idNum > maxId) maxId = idNum;
-                        } catch (NumberFormatException e) {}
-                    }
-                    String newId = String.valueOf(maxId + 1);
-                    
-                    // Set default image if not provided
-                    if (image == null || image.trim().isEmpty()) {
-                        image = "pic product/default.png";
-                    }
-                    
-                    // Add new product
-                    productsData.put(newId, new String[]{name.trim(), description.trim(), price.trim(), image.trim()});
-                    session.setAttribute("adminProducts", productsData);
-                    
-                    // Redirect to product list with success message
-                    response.sendRedirect("AdminProduct.jsp?added=true&name=" + java.net.URLEncoder.encode(name.trim(), "UTF-8"));
-                    return;
-                }
-            } catch (NumberFormatException e) {
-                errorMessage = "Price must be a valid number.";
-            }
-        }
+    if (categories == null) {
+        response.sendRedirect("AddProductServlet");
+        return;
     }
 %>
 
@@ -68,7 +16,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product - Yaya Cosmetic Admin</title>
+    <title>Yaya Cosmetic - Add Product</title>
     <style>
         body { 
             margin: 0; 
@@ -76,7 +24,6 @@
             background-color: #ffffff; 
         }
         
-        /* Header */
         header {
             background-color: #7b0d1e;
             color: white;
@@ -112,58 +59,83 @@
             font-weight: 600;
         }
 
-        /* Main Content */
-        .add-container {
-            padding: 40px 10%;
+        .form-container {
+            padding: 40px 5%;
             min-height: 60vh;
         }
 
-        .page-header {
-            margin-bottom: 30px;
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #7b0d1e;
+            text-decoration: none;
+            font-size: 14px;
         }
 
         .page-title {
             font-size: 36px;
             font-weight: bold;
-            margin: 0 0 10px 0;
+            margin: 0 0 30px 0;
         }
 
-        .page-subtitle {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .form-container {
-            display: flex;
-            gap: 40px;
-            flex-wrap: wrap;
-        }
-
-        .form-section {
-            flex: 1;
-            min-width: 350px;
-            background-color: #f9f9f9;
-            padding: 35px;
-            border-radius: 15px;
-        }
-
-        .form-section h2 {
-            font-size: 18px;
-            margin: 0 0 25px 0;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e0e0e0;
-            color: #333;
-        }
-
-        /* Error Message */
         .error-message {
             background-color: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
             padding: 15px 20px;
             border-radius: 8px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+        }
+
+        .form-layout {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        .preview-section {
+            flex: 0 0 300px;
+            background-color: #f9f6f2;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .preview-title {
             font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            background-color: #eee;
+        }
+
+        .preview-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+        }
+
+        .preview-price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #7b0d1e;
+        }
+
+        .form-card {
+            flex: 1;
+            background-color: #f9f6f2;
+            padding: 40px;
+            border-radius: 15px;
         }
 
         .form-group {
@@ -174,201 +146,101 @@
             display: block;
             font-size: 14px;
             font-weight: bold;
-            margin-bottom: 8px;
             color: #333;
-        }
-
-        .form-group label .required {
-            color: #dc3545;
+            margin-bottom: 8px;
         }
 
         .form-group input,
-        .form-group textarea,
-        .form-group select {
+        .form-group select,
+        .form-group textarea {
             width: 100%;
-            padding: 14px;
-            border: 2px solid #ddd;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
             border-radius: 8px;
-            font-size: 15px;
-            font-family: Arial, sans-serif;
+            font-size: 14px;
             box-sizing: border-box;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #7b0d1e;
         }
 
         .form-group textarea {
-            resize: vertical;
             min-height: 100px;
+            resize: vertical;
         }
 
-        .form-group .hint {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .price-input-wrapper {
-            display: flex;
-            align-items: center;
-        }
-
-        .price-prefix {
-            background-color: #e9ecef;
-            padding: 14px 15px;
-            border: 2px solid #ddd;
-            border-right: none;
-            border-radius: 8px 0 0 8px;
-            font-weight: bold;
-            color: #666;
-        }
-
-        .price-input-wrapper input {
-            border-radius: 0 8px 8px 0;
-        }
-
-        /* Preview Section */
-        .preview-section {
-            flex: 0 0 300px;
-            background-color: #f9f6f2;
-            padding: 35px;
-            border-radius: 15px;
-            height: fit-content;
-        }
-
-        .preview-section h2 {
-            font-size: 18px;
-            margin: 0 0 25px 0;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e0e0e0;
-            color: #333;
-        }
-
-        .preview-card {
-            background-color: white;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .preview-card .preview-image {
-            width: 100%;
-            height: 150px;
-            background-color: #e9ecef;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 14px;
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-
-        .preview-card .preview-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .preview-card h3 {
-            font-size: 16px;
-            margin: 10px 0;
-            color: #333;
-        }
-
-        .preview-card p {
-            font-size: 13px;
-            color: #666;
-            margin: 5px 0;
-        }
-
-        .preview-card .price {
-            font-size: 20px;
-            font-weight: bold;
-            color: #7b0d1e;
-            margin-top: 15px;
-        }
-
-        /* Buttons */
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .btn {
-            padding: 14px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            text-transform: uppercase;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background-color: #28a745;
-            color: white;
-            flex: 1;
-        }
-
-        .btn-primary:hover {
-            background-color: #218838;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #545b62;
-        }
-
-        /* Image Options */
-        .image-options {
+        .form-row {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .image-selection {
             margin-top: 10px;
         }
 
-        .image-option {
-            border: 2px solid #ddd;
+        .image-selection-title {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #fff;
             border-radius: 8px;
-            padding: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .image-option {
+            position: relative;
             cursor: pointer;
-            transition: all 0.3s;
         }
 
-        .image-option:hover {
-            border-color: #7b0d1e;
-        }
-
-        .image-option.selected {
-            border-color: #7b0d1e;
-            background-color: #fff5f5;
+        .image-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
 
         .image-option img {
             width: 100%;
-            height: 50px;
+            height: 80px;
             object-fit: cover;
-            border-radius: 4px;
+            border-radius: 8px;
+            border: 3px solid transparent;
+            transition: all 0.2s;
         }
 
-        /* Footer */
+        .image-option input[type="radio"]:checked + img {
+            border-color: #7b0d1e;
+            box-shadow: 0 0 10px rgba(123, 13, 30, 0.3);
+        }
+
+        .image-option:hover img {
+            border-color: #ddd;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-submit:hover {
+            background-color: #218838;
+        }
+
         footer {
             background-color: #7b0d1e;
             color: white;
@@ -394,25 +266,15 @@
             text-decoration: none;
             font-size: 13px;
             margin: 8px 0;
-            line-height: 1.4;
         }
 
-        @media (max-width: 768px) {
-            .form-container {
+        @media (max-width: 800px) {
+            .form-layout {
                 flex-direction: column;
             }
-
-            .form-section,
             .preview-section {
-                min-width: 100%;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            .image-options {
-                grid-template-columns: repeat(2, 1fr);
+                flex: none;
+                width: 100%;
             }
         }
     </style>
@@ -425,113 +287,89 @@
             <div class="brand-name">Yaya Cosmetic</div>
         </div>
         <nav>
-            <a href="AdminHome.jsp">HOME</a>
-            <a href="AdminProduct.jsp">PRODUCT</a>
-            <a href="AdminOrder.jsp">ORDER</a>
-            <a href="AdminMember.jsp">MEMBER</a>
-            <a href="AdminProfile.jsp">PROFILE</a>
+            <a href="AdminDashboardServlet">HOME</a>
+            <a href="AdminProductServlet">PRODUCT</a>
+            <a href="AdminOrderServlet">ORDER</a>
+            <a href="AdminMemberServlet">MEMBER</a>
+            <a href="AdminProfileServlet">PROFILE</a>
         </nav>
     </header>
 
-    <div class="add-container">
-        <div class="page-header">
-            <h1 class="page-title">ADD NEW PRODUCT</h1>
-            <p class="page-subtitle">Fill in the details below to add a new product to your catalog.</p>
-        </div>
+    <div class="form-container">
+        <a href="AdminProductServlet" class="back-link">← Back to Products</a>
+        <h1 class="page-title">ADD NEW PRODUCT</h1>
 
-        <% if (errorMessage != null) { %>
-            <div class="error-message">
-                <strong>Error:</strong> <%= errorMessage %>
-            </div>
+        <% if (error != null) { %>
+            <div class="error-message"><%= error %></div>
         <% } %>
 
-        <form method="POST" action="AddProduct.jsp?action=add" id="addProductForm">
-            <div class="form-container">
-                <!-- Form Section -->
-                <div class="form-section">
-                    <h2>Product Information</h2>
+        <div class="form-layout">
+            <div class="preview-section">
+                <div class="preview-title">Product Preview</div>
+                <img id="previewImg" src="pic product/3.png" alt="Preview" class="preview-image">
+                <div id="previewName" class="preview-name">Product Name</div>
+                <div id="previewPrice" class="preview-price">RM 0.00</div>
+            </div>
 
+            <div class="form-card">
+                <form action="AddProductServlet" method="POST">
                     <div class="form-group">
-                        <label>Product Name <span class="required">*</span></label>
-                        <input type="text" name="name" id="productName" required 
-                               placeholder="e.g., YAYA GOLD PALETTE" maxlength="100"
+                        <label>Product Name *</label>
+                        <input type="text" name="name" id="nameInput" required placeholder="Enter product name" 
                                oninput="updatePreview()">
                     </div>
 
                     <div class="form-group">
-                        <label>Description <span class="required">*</span></label>
-                        <textarea name="description" id="productDesc" required 
-                                  placeholder="e.g., Contain 12 shining color" maxlength="500"
-                                  oninput="updatePreview()"></textarea>
-                        <p class="hint">Describe the product features and contents.</p>
+                        <label>Description</label>
+                        <textarea name="description" placeholder="Enter product description"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Price (RM) *</label>
+                            <input type="number" name="price" id="priceInput" step="0.01" min="0" required 
+                                   placeholder="0.00" oninput="updatePreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Stock Quantity *</label>
+                            <input type="number" name="stock" min="0" required placeholder="0">
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Price (RM) <span class="required">*</span></label>
-                        <div class="price-input-wrapper">
-                            <span class="price-prefix">RM</span>
-                            <input type="number" name="price" id="productPrice" required 
-                                   placeholder="100" min="1" max="9999"
-                                   oninput="updatePreview()">
-                        </div>
-                        <p class="hint">Enter price in Malaysian Ringgit.</p>
+                        <label>Category *</label>
+                        <select name="categoryId" required>
+                            <option value="">Select Category</option>
+                            <% for (Category cat : categories) { %>
+                                <option value="<%= cat.getCategoryId() %>"><%= cat.getName() %></option>
+                            <% } %>
+                        </select>
                     </div>
 
                     <div class="form-group">
-                        <label>Product Image</label>
-                        <input type="text" name="image" id="productImage" 
-                               placeholder="pic product/3.png" 
-                               onchange="updatePreview()">
-                        <p class="hint">Select from existing images or enter custom path.</p>
-                        
-                        <div class="image-options">
-                            <div class="image-option" onclick="selectImage('pic product/3.png')">
-                                <img src="pic product/3.png" alt="Gold">
-                            </div>
-                            <div class="image-option" onclick="selectImage('pic product/4.png')">
-                                <img src="pic product/4.png" alt="Blue">
-                            </div>
-                            <div class="image-option" onclick="selectImage('pic product/5.png')">
-                                <img src="pic product/5.png" alt="Green">
-                            </div>
-                            <div class="image-option" onclick="selectImage('pic product/6.png')">
-                                <img src="pic product/6.png" alt="Black">
-                            </div>
-                            <div class="image-option" onclick="selectImage('pic product/7.png')">
-                                <img src="pic product/7.png" alt="Pink">
-                            </div>
-                            <div class="image-option" onclick="selectImage('pic product/8.png')">
-                                <img src="pic product/8.png" alt="Orange">
-                            </div>
-                            <div class="image-option" onclick="selectImage('pic product/9.png')">
-                                <img src="pic product/9.png" alt="Purple">
-                            </div>
-                            <div class="image-option" onclick="selectImage('pic product/10.png')">
-                                <img src="pic product/10.png" alt="Red">
+                        <label>Select Product Image *</label>
+                        <div class="image-selection">
+                            <div class="image-selection-title">Click to select an image:</div>
+                            <div class="image-grid">
+                                <% if (availableImages != null) {
+                                    boolean first = true;
+                                    for (String img : availableImages) { %>
+                                    <label class="image-option">
+                                        <input type="radio" name="image" value="<%= img %>" 
+                                               onchange="selectImage('<%= img %>')" <%= first ? "checked" : "" %>>
+                                        <img src="<%= img %>" alt="Product Image">
+                                    </label>
+                                <% first = false;
+                                    }
+                                } %>
                             </div>
                         </div>
                     </div>
 
-                    <div class="button-group">
-                        <button type="submit" class="btn btn-primary">Add Product</button>
-                        <a href="AdminProduct.jsp" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </div>
-
-                <!-- Preview Section -->
-                <div class="preview-section">
-                    <h2>Live Preview</h2>
-                    <div class="preview-card">
-                        <div class="preview-image" id="previewImage">
-                            <span>No image selected</span>
-                        </div>
-                        <h3 id="previewName">Product Name</h3>
-                        <p id="previewDesc">Product description will appear here</p>
-                        <div class="price" id="previewPrice">RM 0</div>
-                    </div>
-                </div>
+                    <button type="submit" class="btn-submit">Add Product</button>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 
     <footer>
@@ -539,7 +377,6 @@
             <h4>ABOUT YAYA</h4>
             <a href="#">HISTORY</a>
             <a href="#">WORK IN YAYA</a>
-            <a href="#">BELABOUR</a>
         </div>
         <div class="footer-col">
             <h4>ADDRESS</h4>
@@ -551,41 +388,30 @@
         <div class="footer-col">
             <h4>CONTACT</h4>
             <p>03-78279388 (OFFICE HOUR)</p>
-            <p>yayacosmetic@hotline.com (official email)</p>
+            <p>yayacosmetic@hotline.com</p>
             <p>@yayacosmeticofficial (Instagram)</p>
         </div>
     </footer>
 
     <script>
+        function selectImage(imgPath) {
+            document.getElementById('previewImg').src = imgPath;
+        }
+
         function updatePreview() {
-            var name = document.getElementById('productName').value || 'Product Name';
-            var desc = document.getElementById('productDesc').value || 'Product description will appear here';
-            var price = document.getElementById('productPrice').value || '0';
-            var image = document.getElementById('productImage').value;
-
+            var name = document.getElementById('nameInput').value || 'Product Name';
+            var price = document.getElementById('priceInput').value || '0.00';
             document.getElementById('previewName').textContent = name;
-            document.getElementById('previewDesc').textContent = desc;
-            document.getElementById('previewPrice').textContent = 'RM ' + price;
+            document.getElementById('previewPrice').textContent = 'RM ' + parseFloat(price).toFixed(2);
+        }
 
-            var previewImageDiv = document.getElementById('previewImage');
-            if (image) {
-                previewImageDiv.innerHTML = '<img src="' + image + '" alt="Preview" onerror="this.parentElement.innerHTML=\'<span>Image not found</span>\'">';
-            } else {
-                previewImageDiv.innerHTML = '<span>No image selected</span>';
+        // Initialize preview with first image
+        window.onload = function() {
+            var firstRadio = document.querySelector('input[name="image"]:checked');
+            if (firstRadio) {
+                selectImage(firstRadio.value);
             }
-        }
-
-        function selectImage(imagePath) {
-            document.getElementById('productImage').value = imagePath;
-            
-            // Update selected state
-            document.querySelectorAll('.image-option').forEach(function(opt) {
-                opt.classList.remove('selected');
-            });
-            event.currentTarget.classList.add('selected');
-            
-            updatePreview();
-        }
+        };
     </script>
 
 </body>
