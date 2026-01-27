@@ -96,7 +96,14 @@ public class AddProductServlet extends HttpServlet {
             Product product = new Product();
             product.setName(name.trim());
             product.setDescription(description != null ? description.trim() : "");
-            product.setPrice(new BigDecimal(priceStr != null ? priceStr : "0"));
+            double price = 0.0;
+
+            if (priceStr != null && !priceStr.trim().isEmpty()) {
+                price = Double.parseDouble(priceStr);
+            }
+
+            product.setPrice(price);
+
             product.setStockQty(stockStr != null ? Integer.parseInt(stockStr) : 0);
             product.setCategoryId(categoryIdStr != null ? Integer.parseInt(categoryIdStr) : 1);
             product.setImage(image != null ? image.trim() : "pic product/default.png");
