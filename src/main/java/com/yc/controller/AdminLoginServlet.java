@@ -20,31 +20,33 @@ public class AdminLoginServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        try {
-            Connection conn = DBConnection.getConnection();
+        try (Connection conn = DBConnection.getConnection()) {
 
             String sql = "SELECT adminId, email, fullName FROM admin WHERE email=? AND password=?";
-            PreparedStatement ps = conn.prepareStatement(sql);
+
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, password);
 
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // LOGIN SUCCESS
+                    HttpSession session = request.getSession();
 
-            if (rs.next()) {
-                // LOGIN SUCCESS
-                HttpSession session = request.getSession();
+                    session.setAttribute("adminId", rs.getInt("adminId"));
+                    session.setAttribute("adminEmail", rs.getString("email"));
+                    session.setAttribute("adminName", rs.getString("fullName"));
 
-                session.setAttribute("adminId", rs.getInt("adminId"));
-                session.setAttribute("adminEmail", rs.getString("email"));
-                session.setAttribute("adminName", rs.getString("fullName"));
+                    response.sendRedirect("AdminHome.jsp");
 
-                response.sendRedirect("AdminHome.jsp");
-
-            } else {
-                // LOGIN FAILED
-                request.setAttribute("error", "Invalid email or password");
-                request.getRequestDispatcher("AdminLogin.jsp").forward(request, response);
+                } else {
+                    // LOGIN FAILED
+                    request.setAttribute("error", "Invalid email or password");
+                    request.getRequestDispatcher("AdminLogin.jsp").forward(request, response);
+                }
             }
+        }
+            
 
         } catch (Exception e) {
             e.printStackTrace();
