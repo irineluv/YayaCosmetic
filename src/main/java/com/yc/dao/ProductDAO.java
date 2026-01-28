@@ -91,7 +91,7 @@ public class ProductDAO {
 
     public boolean addProduct(Product product) {
         String sql = "INSERT INTO products (categoryId, createdBy, name, description, price, stock_qty, image, colors) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -151,7 +151,7 @@ public class ProductDAO {
     }
 
     public boolean updateStock(int productId, int quantity) {
-        String sql = "UPDATE products SET stock_qty = ? WHERE productId = ?";
+        String sql = "UPDATE products SET stock_qty = stock_qty - ? WHERE productId = ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
