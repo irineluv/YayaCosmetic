@@ -317,10 +317,10 @@
             <div class="product-grid">
                 <% for (Product product : products) { %>
                     <div class="product-card">
-                        <img src="<%= product.getImage() != null ? product.getImage() : "pic product/default.png" %>" 
+                         <img src="<%= product.getImage() != null ? product.getImage() : "pic product/3.png" %>"  
                              alt="<%= product.getName() %>">
                         <h3><%= product.getName() %></h3>
-                        <p class="description"><%= product.getDescription() %></p>
+                        <p class="description"><%= product.getDescription() != null ? product.getDescription() : "" %></p>
                         <p class="price">RM <%= product.getPrice() %></p>
                         <p class="stock">Stock: <%= product.getStockQty() %> units</p>
                         <div class="card-actions">
