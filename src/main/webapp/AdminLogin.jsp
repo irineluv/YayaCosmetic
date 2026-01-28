@@ -1,4 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+    String error = (String) request.getAttribute("error");
+%>
 <!-- ===== ADMIN LOGIN PAGE ===== -->
 <!-- This page allows administrators to log into the system -->
 <!-- Uses darker burgundy theme to distinguish from user login -->
@@ -137,6 +140,16 @@
         .footer-links a:hover {
             text-decoration: underline;
         }
+        .error-message {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -150,6 +163,10 @@
 
         <!-- White card containing login form -->
         <div class="login-card">
+             <% if (error != null) { %>
+                <div class="error-message"><%= error %></div>
+            <% } %>
+
             <!-- Form submits to AdminLoginServlet for authentication -->
             <!-- Later: servlet will validate credentials and create admin session -->
             <form action="AdminLoginServlet" method="POST">
