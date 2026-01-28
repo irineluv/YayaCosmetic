@@ -250,9 +250,9 @@
         </div>
         <nav>
             <a href="HomePage.jsp">Home</a>
-            <a href="Product.jsp">Product</a>
-            <a href="Cart.jsp">Cart</a>
-            <a href="#">History</a>
+            <a href="ProductServlet">Product</a>
+            <a href="CartServlet">Cart</a>
+            <a href="OrderHistoryServlet">History</a>
             <div class="dropdown">
                  <% 
                      // Check if a user is logged in
@@ -270,8 +270,8 @@
                  %>
                      <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
                      <div class="dropdown-content">
-                         <a href="Profile.jsp">View Profile</a>
-                         <a href="Logout.jsp">Logout</a>
+                         <a href="ProfileServlet">View Profile</a>
+                         <a href="LogoutServlet">Logout</a>
                      </div>
                  <% 
                      } 
@@ -293,12 +293,12 @@
         </div>
 
         <div class="description">
-            <strong>COLOR:</strong> <%= product.getColors() %>
+            <strong>COLOR:</strong> <%= product.getColors() != null ? product.getColors() : "Various" %>
         </div>
 
-        <form action="Cart.jsp" method="GET">
+        <form action="CartServlet" method="POST">
             <input type="hidden" name="action" value="add">
-            <input type="hidden" name="id" value="<%= product.getProductId() %>">
+            <input type="hidden" name="productId" value="<%= product.getProductId() %>">
             <input type="hidden" name="quantity" value="1">
             <button type="submit" class="add-to-cart-btn">ADD TO CART</button>
         </form>
