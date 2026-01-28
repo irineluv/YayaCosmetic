@@ -20,32 +20,34 @@ public class LoginServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        try {
-            Connection conn = DBConnection.getConnection();
+        try (Connection conn = DBConnection.getConnection()) {
 
             String sql = "SELECT userId, email, full_name FROM users WHERE email=? AND password=?";
-            PreparedStatement ps = conn.prepareStatement(sql);
+            
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, password);
 
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // LOGIN SUCCESS
+                    HttpSession session = request.getSession();
 
-            if (rs.next()) {
-                // LOGIN SUCCESS
-                HttpSession session = request.getSession();
+                    session.setAttribute("userId", rs.getInt("userId"));
+                    session.setAttribute("userEmail", rs.getString("email"));
+                    session.setAttribute("userName", rs.getString("full_name"));
 
-                session.setAttribute("userId", rs.getInt("userId"));
-                session.setAttribute("userEmail", rs.getString("email"));
-                session.setAttribute("userName", rs.getString("full_name"));
+                    response.sendRedirect("HomePage.jsp");
 
-                response.sendRedirect("HomePage.jsp");
-
-            } else {
-                // LOGIN FAILED
-                request.setAttribute("error", "Invalid email or password");
-                request.getRequestDispatcher("Login.jsp").forward(request, response);
+                } else {
+                    // LOGIN FAILED
+                    request.setAttribute("error", "Invalid email or password");
+                    request.getRequestDispatcher("Login.jsp").forward(request, response);
+                }
             }
-
+        }
+            
+            
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("error", "System error");
