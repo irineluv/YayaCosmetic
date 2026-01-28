@@ -1,3 +1,8 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+    String error = (String) request.getAttribute("error");
+%>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -168,6 +173,18 @@
         .footer-links a:hover {
             text-decoration: underline;
         }
+
+        .error-message {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            font-family: Arial, sans-serif;
+        }
+
     </style>
 </head>
 <body>
@@ -179,6 +196,9 @@
         <h2 class="page-title">LOGIN</h2>
 
         <div class="login-card">
+            <% if (error != null) { %>
+                <div class="error-message"><%= error %></div>
+            <% } %>
             <form action="LoginServlet" method="post">
                 <div class="form-group">
                     <label>EMAIL</label>
