@@ -89,7 +89,7 @@ public class PlaceOrderServlet extends HttpServlet {
                     orderDAO.addOrderItem(orderItem);
                     
                     // Update product stock
-                    // productDAO.updateStock(item.getProductId(), -item.getQuantity());
+                    productDAO.updateStock(item.getProductId(), item.getQuantity());
                 }
                 
                 // Store order info in session for payment page
