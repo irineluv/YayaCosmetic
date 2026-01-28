@@ -183,8 +183,8 @@
     <nav>
         <a href="HomePage.jsp">HOME</a>
         <a href="ProductServlet">PRODUCT</a>
-        <a href="Cart.jsp">CART</a>
-        <a href="History.jsp">History</a>
+        <a href="CartServlet">CART</a>
+        <a href="OrderHistoryServlet">History</a>
 
 
         <div class="dropdown">
@@ -202,8 +202,8 @@
             %>
                 <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
                 <div class="dropdown-content">
-                    <a href="Profile.jsp">View Profile</a>
-                    <a href="Logout.jsp">Logout</a>
+                    <a href="ProfileServlet">View Profile</a>
+                    <a href="LogoutServlet">Logout</a>
                 </div>
             <%
                 }
@@ -230,9 +230,9 @@
                 for (Product p : products) {
         %>
             <a href="ProductDetailServlet?id=<%= p.getProductId() %>" class="product-card">
-                <img src="<%= p.getImage() %>" alt="<%= p.getName() %>">
+                <img src="<%= p.getImage() != null ? p.getImage() : "pic product/3.png" %>" alt="<%= p.getName() %>">
                 <h3><%= p.getName() %></h3>
-                <p><%= p.getDescription() %></p>
+                <p><%= p.getDescription() != null ? p.getDescription() : "" %></p>
                 <div class="price">RM <%= String.format("%.2f", p.getPrice()) %></div>
             </a>
         <%
