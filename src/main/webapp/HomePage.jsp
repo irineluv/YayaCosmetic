@@ -9,7 +9,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yaya Cosmetic</title>
     <style>
         body {
@@ -206,9 +206,9 @@
         </div>
         <nav>
             <a href="HomePage.jsp">Home</a>
-            <a href="Product.jsp">Product</a>
-            <a href="Cart.jsp">Cart</a>
-            <a href="#">History</a>
+            <a href="ProductServlet">Product</a>
+            <a href="CartServlet">Cart</a>
+            <a href="OrderHistoryServlet">History</a>
             <div class="dropdown">
                  <% 
                      // Check if a user is logged in
@@ -226,8 +226,8 @@
                  %>
                      <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
                      <div class="dropdown-content">
-                         <a href="Profile.jsp">View Profile</a>
-                         <a href="Logout.jsp">Logout</a>
+                         <a href="ProfileServlet">View Profile</a>
+                         <a href="LogoutServlet">Logout</a>
                      </div>
                  <% 
                      } 
