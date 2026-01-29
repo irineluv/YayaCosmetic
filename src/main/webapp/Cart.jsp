@@ -3,15 +3,12 @@
 <%
     List<CartItem> cartItems = (List<CartItem>) request.getAttribute("cartItems");
     BigDecimal cartTotal = (BigDecimal) request.getAttribute("cartTotal");
-    Integer cartCount = (Integer) request.getAttribute("cartCount");
     
     if (cartItems == null) {
         response.sendRedirect("CartServlet");
         return;
     }
     
-    if (cartTotal == null) cartTotal = BigDecimal.ZERO;
-    if (cartCount == null) cartCount = 0;
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,12 +19,14 @@
     <style>
         body {
             margin: 0;
-            font-family: 'Arial', sans-serif;
-            background-color: #fcfcfc;
+            font-family: 'Serif', 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            
         }
 
+        /* Header / Navbar */
         header {
-            background-color: #7b0d1e;
+            background-color: #7b0d1e; /* Deep Red/Burgundy */
             color: white;
             padding: 10px 50px;
             display: flex;
@@ -42,29 +41,29 @@
         }
 
         .logo-img {
-            height: 50px;
+            height: 50px; /* Adjust based on your logo size */
             width: auto;
         }
 
         .brand-name {
+            font-size: 28px;
             font-family: 'Times New Roman', serif;
-            font-size: 26px;
             letter-spacing: 2px;
             text-transform: uppercase;
-        }
-
-        nav {
-            display: flex;
-            align-items: center;
-            gap: 25px;
         }
 
         nav a {
             color: white;
             text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
+            margin-left: 20px;
+            font-size: 13px;
+            font-weight: bold;
             text-transform: uppercase;
+        }
+        
+        nav {
+            display:flex;
+            align-items:center;
         }
 
         .cart-section {
@@ -271,7 +270,80 @@
             font-size: 13px;
             margin: 8px 0;
         }
+        
+        .dropdown{
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-content{
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px black;
+            z-index: 1;
+            right: 0;
+            margin-top: 5px;
+        }
+        
+        .dropdown-content a{
+            color: #7b0d1e !important;
+            padding: 12px 16px;
+            display: block;
+            text-align: left;
+            margin: 0;
+            font-size: 13px;
+            text-transform: none;
+            border-bottom: 1px solid;
+        }
+        
+        .dropdown-content a:hover{
+            background-color: #f1f1f1;
+        }
+        
+        .dropdown:hover .dropdown-content{
+            display:block;
+        }
+        
+        .dropdown:hover .dropbtn{
+            color:#ccc;
+        }
+        .cart-link {
+            position: relative;
+            display: inline-block;
+            padding-right: 12px;
+        }
+        /* Floating badge */
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background-color: #FFC107; /* Luxury Yellow */
+            color: #000;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+            animation: popIn 0.3s ease;
+        }
 
+        /* Cute pop animation */
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
         @media (max-width: 800px) {
             .cart-container {
                 flex-direction: column;
@@ -288,10 +360,41 @@
         </div>
         <nav>
             <a href="HomePage.jsp">Home</a>
-            <a href="ProductListServlet">Products</a>
+            <a href="ProductServlet">Product</a>
+            <a href="CartServlet" class="cart-link">
+                Cart
+                <%
+                    Integer cartCount = (Integer) session.getAttribute("cartCount");
+                    if (cartCount != null && cartCount > 0) {
+                %>
+                    <span class="cart-badge"><%= cartCount %></span>
+                <% } %>
+            </a>
             <a href="OrderHistoryServlet">History</a>
-            <a href="ProfileServlet">Profile</a>
-            <a href="LogoutServlet">Logout</a>
+            <div class="dropdown">
+                 <% 
+                     // Check if a user is logged in
+                     String currentUser = (String) session.getAttribute("userEmail"); 
+
+                     if (currentUser == null) { 
+                 %>
+                     <a href="#" class="dropbtn">Profile</a>
+                     <div class="dropdown-content">
+                         <a href="Login.jsp">Login</a>
+                         <a href="Signup.jsp">Sign up</a>
+                     </div>
+                 <% 
+                     } else { 
+                 %>
+                     <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
+                     <div class="dropdown-content">
+                         <a href="ProfileServlet">View Profile</a>
+                         <a href="LogoutServlet">Logout</a>
+                     </div>
+                 <% 
+                     } 
+                 %>
+            </div>
         </nav>
     </header>
 

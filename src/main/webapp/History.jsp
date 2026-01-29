@@ -2,14 +2,12 @@
 <%@ page import="java.util.*, com.yc.model.Order, java.text.SimpleDateFormat" %>
 <%
     List<Order> orders = (List<Order>) request.getAttribute("orders");
-    Integer cartCount = (Integer) request.getAttribute("cartCount");
     
     if (orders == null) {
         response.sendRedirect("OrderHistoryServlet");
         return;
     }
     
-    if (cartCount == null) cartCount = 0;
     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 %>
 <!DOCTYPE html>
@@ -19,16 +17,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yaya Cosmetic - Order History</title>
     <style>
-        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #fcfcfc; }
-        header { background-color: #7b0d1e; color: white; padding: 10px 50px; display: flex; justify-content: space-between; align-items: center; }
-        .logo-container { display: flex; align-items: center; gap: 15px; }
-        .logo-img { height: 50px; width: auto; }
-        .brand-name { font-family: 'Times New Roman', serif; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; }
-        nav { display: flex; align-items: center; gap: 25px; }
-        nav a { color: white; text-decoration: none; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; }
-        .cart-icon { position: relative; }
-        .cart-badge { position: absolute; top: -8px; right: -8px; background-color: #ffc107; color: #000; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 50%; }
+        body {
+            margin: 0;
+            font-family: 'Serif', 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            
+        }
 
+        /* Header / Navbar */
+        header {
+            background-color: #7b0d1e; /* Deep Red/Burgundy */
+            color: white;
+            padding: 10px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            height: 50px; /* Adjust based on your logo size */
+            width: auto;
+        }
+
+        .brand-name {
+            font-size: 28px;
+            font-family: 'Times New Roman', serif;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        nav {
+            display:flex;
+            align-items:center;
+        }
+        .cart-link {
+            position: relative;
+            display: inline-block;
+            padding-right: 12px;
+        }
+        /* Floating badge */
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background-color: #FFC107; /* Luxury Yellow */
+            color: #000;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+            animation: popIn 0.3s ease;
+        }
+
+        /* Cute pop animation */
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
         .history-section { padding: 40px 60px; min-height: 60vh; }
         .section-title { font-size: 32px; font-weight: bold; margin: 0 0 30px 0; }
 
@@ -56,6 +127,44 @@
         .footer-col { flex: 1; }
         .footer-col h4 { font-size: 16px; margin-bottom: 20px; text-transform: uppercase; }
         .footer-col p, .footer-col a { display: block; color: #ffffff; text-decoration: none; font-size: 13px; margin: 8px 0; }
+        .dropdown{
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-content{
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px black;
+            z-index: 1;
+            right: 0;
+            margin-top: 5px;
+        }
+        
+        .dropdown-content a{
+            color: #7b0d1e !important;
+            padding: 12px 16px;
+            display: block;
+            text-align: left;
+            margin: 0;
+            font-size: 13px;
+            text-transform: none;
+            border-bottom: 1px solid;
+        }
+        
+        .dropdown-content a:hover{
+            background-color: #f1f1f1;
+        }
+        
+        .dropdown:hover .dropdown-content{
+            display:block;
+        }
+        
+        .dropdown:hover .dropbtn{
+            color:#ccc;
+        }
     </style>
 </head>
 <body>
@@ -67,11 +176,42 @@
         </div>
         <nav>
             <a href="HomePage.jsp">Home</a>
-            <a href="ProductListServlet">Products</a>
+            <a href="ProductServlet">Product</a>
+            <a href="CartServlet" class="cart-link">
+                Cart
+                <%
+                    Integer cartCount = (Integer) session.getAttribute("cartCount");
+                    if (cartCount != null && cartCount > 0) {
+                %>
+                    <span class="cart-badge"><%= cartCount %></span>
+                <% } %>
+            </a>
             <a href="OrderHistoryServlet">History</a>
-            <a href="ProfileServlet">Profile</a>
-            <a href="LogoutServlet">Logout</a>
-            <a href="CartServlet" class="cart-icon">🛒<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount %></span><% } %></a>
+            <div class="dropdown">
+                 <% 
+                     // Check if a user is logged in
+                     String currentUser = (String) session.getAttribute("userEmail"); 
+
+                     if (currentUser == null) { 
+                 %>
+                     <a href="#" class="dropbtn">Profile</a>
+                     <div class="dropdown-content">
+                         <a href="Login.jsp">Login</a>
+                         <a href="Signup.jsp">Sign up</a>
+                     </div>
+                 <% 
+                     } else { 
+                 %>
+                     <a href="#" class="dropbtn">Hi, <%= currentUser %></a>
+                     <div class="dropdown-content">
+                         <a href="ProfileServlet">View Profile</a>
+                         <a href="LogoutServlet">Logout</a>
+                     </div>
+                 <% 
+                     } 
+                 %>
+            </div>
+            <!--<a href="CartServlet" class="cart-icon">🛒<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount %></span><% } %></a>-->
         </nav>
     </header>
 

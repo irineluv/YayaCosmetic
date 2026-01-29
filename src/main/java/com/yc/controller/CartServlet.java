@@ -35,7 +35,10 @@ public class CartServlet extends HttpServlet {
         request.setAttribute("cartItems", cartItems);
         request.setAttribute("cartTotal", cartTotal);
         request.setAttribute("cartCount", cartCount);
+        session.setAttribute("cartCount", cartCount);
+        
         request.getRequestDispatcher("Cart.jsp").forward(request, response);
+        
     }
 
     @Override
@@ -56,22 +59,26 @@ public class CartServlet extends HttpServlet {
         if ("add".equals(action)) {
             String productIdStr = request.getParameter("productId");
             String quantityStr = request.getParameter("quantity");
-            
+
             if (productIdStr != null) {
                 int productId = Integer.parseInt(productIdStr);
                 int quantity = quantityStr != null ? Integer.parseInt(quantityStr) : 1;
                 cartDAO.addToCart(cartId, productId, quantity);
+
+                session.setAttribute("cartMessage", "  Item has been added to cart");
             }
-            
-            // Redirect back to referring page or product list
+
             String referer = request.getHeader("Referer");
             if (referer != null && !referer.contains("Cart")) {
                 response.sendRedirect(referer);
             } else {
                 response.sendRedirect("CartServlet");
             }
+            int cartCount = cartDAO.getCartItemCount(cartId);
+            session.setAttribute("cartCount", cartCount);
 
-        } else if ("update".equals(action)) {
+        }
+         else if ("update".equals(action)) {
             String cartItemIdStr = request.getParameter("cartItemId");
             String quantityStr = request.getParameter("quantity");
             

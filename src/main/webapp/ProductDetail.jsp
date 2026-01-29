@@ -19,11 +19,12 @@
         /* Global Styles */
         body {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            color: #333;
+            font-family: 'Serif', 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            
         }
 
+        /* Header / Navbar */
         header {
             background-color: #7b0d1e; /* Deep Red/Burgundy */
             color: white;
@@ -228,6 +229,78 @@
             margin: 8px 0;
             line-height: 1.4;
         }
+        
+        #toast {
+            position: fixed;
+            top: 90px; /* BELOW NAVBAR */
+            right: 30px;
+            background-color: #7b0d1e; /* Brand Burgundy */
+            color: #ffffff;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 12px 30px rgba(123, 13, 30, 0.35);
+            opacity: 0;
+            transform: translateY(-15px);
+            transition: all 0.45s ease;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Show animation */
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Optional icon styling */
+        #toast span::before {
+            content: "✔";
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            padding: 4px 7px;
+            font-size: 12px;
+        }
+        .cart-link {
+            position: relative;
+            display: inline-block;
+            padding-right: 12px;
+        }
+
+        /* Floating badge */
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background-color: #FFC107; /* Luxury Yellow */
+            color: #000;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+            animation: popIn 0.3s ease;
+        }
+
+        /* Cute pop animation */
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
 
         /* Responsive - stack on small screens */
         @media (max-width: 768px) {
@@ -242,6 +315,27 @@
     </style>
 </head>
 <body>
+<%
+    String cartMessage = (String) session.getAttribute("cartMessage");
+    if (cartMessage != null) {
+%>
+    <div id="toast">
+        <span><%= cartMessage %></span>
+    </div>
+
+    <script>
+        const toast = document.getElementById("toast");
+        toast.classList.add("show");
+
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 3000);
+    </script>
+<%
+        session.removeAttribute("cartMessage");
+    }
+%>
+
 
     <header>
         <div class="logo-container">
@@ -251,7 +345,15 @@
         <nav>
             <a href="HomePage.jsp">Home</a>
             <a href="ProductServlet">Product</a>
-            <a href="CartServlet">Cart</a>
+            <a href="CartServlet" class="cart-link">
+                Cart
+                <%
+                    Integer cartCount = (Integer) session.getAttribute("cartCount");
+                    if (cartCount != null && cartCount > 0) {
+                %>
+                    <span class="cart-badge"><%= cartCount %></span>
+                <% } %>
+            </a>
             <a href="OrderHistoryServlet">History</a>
             <div class="dropdown">
                  <% 

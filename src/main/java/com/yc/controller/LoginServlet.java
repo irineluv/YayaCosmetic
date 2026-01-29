@@ -1,6 +1,7 @@
 package com.yc.controller;
 
 import com.yc.util.DBConnection;
+import com.yc.dao.CartDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -33,10 +34,17 @@ public class LoginServlet extends HttpServlet {
                     // LOGIN SUCCESS
                     HttpSession session = request.getSession();
 
+                    int userId = rs.getInt("userId");
+                     
                     session.setAttribute("userId", rs.getInt("userId"));
                     session.setAttribute("userEmail", rs.getString("email"));
                     session.setAttribute("userName", rs.getString("full_name"));
-
+                    
+                    CartDAO cartDAO = new CartDAO();
+                    int cartId = cartDAO.getOrCreateCart(userId);
+                    int cartCount = cartDAO.getCartItemCount(cartId);
+                    session.setAttribute("cartCount", cartCount);
+                    
                     response.sendRedirect("HomePage.jsp");
 
                 } else {

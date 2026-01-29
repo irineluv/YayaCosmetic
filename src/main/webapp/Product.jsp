@@ -169,6 +169,41 @@
             font-size: 16px;
             margin-top: 10px;
         }
+        .cart-link {
+            position: relative;
+            display: inline-block;
+            padding-right: 12px;
+        }
+        /* Floating badge */
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background-color: #FFC107; /* Luxury Yellow */
+            color: #000;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+            animation: popIn 0.3s ease;
+        }
+
+        /* Cute pop animation */
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
@@ -183,7 +218,15 @@
     <nav>
         <a href="HomePage.jsp">HOME</a>
         <a href="ProductServlet">PRODUCT</a>
-        <a href="CartServlet">CART</a>
+        <a href="CartServlet" class="cart-link">
+                Cart
+                <%
+                    Integer cartCount = (Integer) session.getAttribute("cartCount");
+                    if (cartCount != null && cartCount > 0) {
+                %>
+                    <span class="cart-badge"><%= cartCount %></span>
+                <% } %>
+            </a>
         <a href="OrderHistoryServlet">History</a>
 
 
